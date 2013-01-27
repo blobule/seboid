@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="hello">Hello World, UdeMActivity!</string>
+    <string name="app_name">UdeM</string>
+    <string name="boutonrssbasic">Les Nouvelles</string>
+    <string name="boutonrss">Les Nouvelles (Sources)</string>
+    <string name="boutonrssCat">Les Nouvelles (Cat)</string>
+    <string name="app_udemrssFeedName">UdeM : Source de nouvelles</string>
+    <string name="app_udemrssCatName">UdeM : Categories</string>
+    <string name="app_udemrssFeedCatName">UdeM : Sources + Categories</string>
+    <string name="app_myPreferencesName">Préférences</string>
+
+       <string-array name="PreferenceFruitsItems">
+        <item>Banane</item>
+        <item>Fraise</item>
+        <item>Pomme</item>
+    </string-array>
+    <string-array name="PreferenceFruitsValues">
+        <item>111</item>
+        <item>222</item>
+    </string-array>
+        <string name="boutonrssFeedCat">Les Nouvelles (F+C)</string>
+    
+</resources>

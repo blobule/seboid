@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" android:padding="5dp">
+
+     <Button
+        android:id="@+id/rssbasic"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/boutonrssbasic"/>
+    
+    <Button
+        android:id="@+id/rss"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/boutonrss"/>
+    
+    <Button
+        android:id="@+id/rsscat"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/boutonrssCat"/>
+
+    <Button
+        android:id="@+id/rssfeedcat"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/boutonrssFeedCat" />
+
+    <LinearLayout
+        android:id="@+id/linearLayout1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:gravity="right" android:padding="5dp">
+
+        <TextView
+            android:id="@+id/textView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mise a jour automatique"
+            android:textAppearance="?android:attr/textAppearanceMedium" android:layout_gravity="center_vertical" android:layout_marginRight="15dp"/>
+
+        <ToggleButton
+            android:id="@+id/serviceToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ToggleButton"/>
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/oneshot"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Mettre a jour immédiatement" android:layout_gravity="right"/>
+
+</LinearLayout>
