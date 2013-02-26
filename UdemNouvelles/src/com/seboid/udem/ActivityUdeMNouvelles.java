@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.text.format.DateUtils;
@@ -22,16 +23,17 @@ import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.SimpleCursorAdapter.ViewBinder;
 import android.widget.TextView;
+import android.widget.Toast;
 
 //
 // activite principale qui affiche la liste des articles
 //
 
-public class UdeMRssListActivity extends Activity  {
+public class ActivityUdeMNouvelles extends Activity  {
 
 	WebView web;
 	ListView lv;
-	SimpleCursorAdapter adapter; // pour afficher les lignes
+	MySimpleCursorAdapter adapter; // pour afficher les lignes
 
 	// busy affichage
 	IntentFilter busyFilter;
@@ -50,9 +52,15 @@ public class UdeMRssListActivity extends Activity  {
 	// Mapping pour l'affiche. from contient les id des elements d'une rangees dans le mapping
 	// to contient les id des elements d'interface
 	// le select sert a choisir les rangees. C' est == from[] + ID
-	static final String[] select = new String[] { DBHelper.C_ID,DBHelper.C_TITLE,DBHelper.C_CATEGORY,DBHelper.C_TIME,DBHelper.C_FAVORI};
+	static final String[] select = new String[] {
+		DBHelper.C_ID,
+		DBHelper.C_TITLE,
+		DBHelper.C_CATEGORY,
+		DBHelper.C_TIME,
+		DBHelper.C_FAVORI,
+		DBHelper.C_LU};
 	static final String[] from = new String[] { DBHelper.C_TITLE,DBHelper.C_CATEGORY,DBHelper.C_TIME,DBHelper.C_FAVORI};
-	static final int[] to = new int[] {R.id.rowtitle,R.id.rowcat,R.id.rowdate,R.id.rowfav };
+	static final int[] to = new int[] {R.id.rowtitle,R.id.rowcat,R.id.rowcatcount,R.id.rowfav };
 
 	/** Called when the activity is first created. */
 	@Override
@@ -79,15 +87,19 @@ public class UdeMRssListActivity extends Activity  {
 
 		//		titreView.setText(nice);
 
+		if( type!=null ) this.setTitle("UdeM | "+selection);
+
 		lv=(ListView)findViewById(R.id.list);		
 		lv.setOnItemClickListener(new OnItemClickListener() {
 			public void onItemClick(AdapterView parent, View view, int position, long id) {
-				//Log.d("rss","a faire: afficher la description "+id);
-				Intent in=new Intent(UdeMRssListActivity.this,UdeMWebActivity.class);
+				Log.d("rss","a faire: afficher la description "+id);
+				//				Intent in=new Intent(ActivityUdeMNouvelles.this,ActivityUdeMWeb.class);
+				Intent in=new Intent(ActivityUdeMNouvelles.this,ActivityUdeMDetail.class);
 				in.putExtra("id",id);
 
 				if( type!=null ) {
-					in.putExtra("where",type+" = '"+selection+"'");
+					in.putExtra("where",type+" = "+ DatabaseUtils.sqlEscapeString(selection));
+					in.putExtra("title",selection);
 					//in.putExtra("pos", position);
 					//cursor=db.query(DBHelper.TABLE, select ,(type!=null?(type+" = '"+selection+"'"):null), null, null, null, DBHelper.C_TIME+" DESC");	
 				}
@@ -120,15 +132,14 @@ public class UdeMRssListActivity extends Activity  {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		Log.d("rss","resume! type="+type+" selection="+selection);
 
 		// get data from database
-		cursor=db.query(DBHelper.TABLE, select ,(type!=null?(type+" = '"+selection+"'"):null), null, null, null, DBHelper.C_TIME+" DESC");
+		cursor=db.query(DBHelper.TABLE, select ,(type!=null?(type+" = "+DatabaseUtils.sqlEscapeString(selection)):null), null, null, null, DBHelper.C_TIME+" DESC");
 		startManagingCursor(cursor);
 
 		// adapter
-		adapter = new SimpleCursorAdapter(this, R.layout.rowfav /* .row */, cursor, from, to);
-		adapter.setViewBinder(VIEW_BINDER); // pour auto definir le rendu des champs
+		adapter = new MySimpleCursorAdapter(this, R.layout.rowfav /* .row */, cursor, from, to);
+		//		adapter.setViewBinder(VIEW_BINDER); // pour auto definir le rendu des champs
 		lv.setAdapter(adapter);
 
 		// enregistre le receiver pour l'etat busy
@@ -154,17 +165,17 @@ public class UdeMRssListActivity extends Activity  {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch(item.getItemId()) {
 		case R.id.menurefresh:			
-			startService(new Intent(this,RssService.class));
+			startService(new Intent(this,ServiceRss.class));
 			break;
 		case R.id.menuprefs:
 			// Launch Preference activity
-			startActivity(new Intent(this, myPreferencesActivity.class));
+			startActivity(new Intent(this, ActivityPreferences.class));
 			break;
 		case R.id.menufeed:
-			startActivity(new Intent(this, UdeMRssFeedActivity.class));
+			startActivity(new Intent(this, ActivityUdeMListFeed.class));
 			break;
 		case R.id.menucat:
-			startActivity(new Intent(this, UdeMRssCatActivity.class));
+			startActivity(new Intent(this, ActivityUdeMListCat.class));
 			break;
 		}
 		return true;
@@ -174,23 +185,24 @@ public class UdeMRssListActivity extends Activity  {
 	// controle de l'affichage des champs d'une ligne
 	//
 
-	static final ViewBinder VIEW_BINDER = new ViewBinder() {
-		public boolean setViewValue(View view, Cursor c, int index) {
-			switch( view.getId() ) {
-			case R.id.rowdate:
-				long timestamp=c.getLong(index)*1000; // sec -> millisec
-				//Log.d("time","time "+timestamp);
-				CharSequence relTime = DateUtils.getRelativeTimeSpanString(timestamp);
-				((TextView)view).setText(relTime);
-				break;
-			case R.id.rowfav:
-					view.setVisibility( c.getPosition()>5?View.INVISIBLE:View.VISIBLE);
-				break;
-			default: return false; // auto-render
-			}
-			return true;
-		}
-	};
+
+	//	static final ViewBinder VIEW_BINDER = new ViewBinder() {
+	//		public boolean setViewValue(View view, Cursor c, int index) {
+	//			switch( view.getId() ) {
+	//			case R.id.rowcatcount:
+	//				long timestamp=c.getLong(index)*1000; // sec -> millisec
+	//				//Log.d("time","time "+timestamp);
+	//				CharSequence relTime = DateUtils.getRelativeTimeSpanString(timestamp);
+	//				((TextView)view).setText(relTime);
+	//				break;
+	//			case R.id.rowfav:
+	//					view.setVisibility( c.getPosition()>5?View.INVISIBLE:View.VISIBLE);
+	//				break;
+	//			default: return false; // auto-render
+	//			}
+	//			return true;
+	//		}
+	//	};
 
 
 	//
@@ -207,6 +219,42 @@ public class UdeMRssListActivity extends Activity  {
 	}
 
 
+
+	class MySimpleCursorAdapter extends SimpleCursorAdapter {
+
+
+		public MySimpleCursorAdapter(Context context, int layout, Cursor c,
+				String[] from, int[] to) {
+			super(context, layout, c, from, to);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public void bindView(View view, Context context, Cursor c) {
+			// TODO Auto-generated method stub
+			//super.bindView(view, context, cursor);
+			TextView tv=(TextView)view.findViewById(R.id.rowcatcount);
+			long timestamp=c.getLong(3)*1000; // sec -> millisec
+			CharSequence relTime = DateUtils.getRelativeTimeSpanString(timestamp);
+			tv.setText(relTime);
+
+			View v=view.findViewById(R.id.rowfav);
+			v.setVisibility( View.INVISIBLE );
+			
+			tv=(TextView)view.findViewById(R.id.rowtitle);
+			tv.setText(c.getString(1));
+			
+			boolean lu=c.getInt(5)==1;
+			tv.setBackgroundColor(lu?0xff333333:0xff000000);
+
+			tv=(TextView)view.findViewById(R.id.rowcat);
+			tv.setText(c.getString(2));
+			
+		
+		}
+
+
+	}
 
 
 

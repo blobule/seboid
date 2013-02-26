@@ -5,28 +5,58 @@
     android:orientation="vertical" android:paddingLeft="5dp" android:paddingBottom="4dp" android:paddingRight="5dp" android:paddingTop="4dp" android:id="@+id/linlayout1">
 
     <LinearLayout
-        android:id="@+id/linearLayout1"
-        android:layout_width="match_parent"
+        android:id="@+id/feedinfo"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="0" >
+        android:layout_weight="0"
+        android:background="#ff666666"
+        android:onClick="actionFeed" >
+
+        <TextView
+            android:id="@+id/rowfeed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Small Text"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/rowfeedcount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:text="5"
+            android:textColor="#00ffff"
+            android:textSize="16dp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/catinfo"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:onClick="actionCat" >
 
         <TextView
             android:id="@+id/rowcat"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="right"
             android:layout_weight="1"
             android:text="cinema"
             android:textColor="#ffff00"
-            android:textSize="16dp" />
+            android:textSize="14sp" />
 
         <TextView
-            android:id="@+id/rowdate"
+            android:id="@+id/rowcatcount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0"
-            android:text="il y a 2 jours"
+            android:text="2"
             android:textColor="#00ffff"
-            android:textSize="16dp"/>
+            android:textSize="14sp" />
 
     </LinearLayout>
 

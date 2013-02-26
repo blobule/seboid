@@ -8,9 +8,11 @@ import android.util.Log;
 
 public class DBHelper extends SQLiteOpenHelper {
 	static final String TAG = "db";
+	
 	static final String DB_NAME = "feed.db";
-	static final int DB_VERSION = 10;
+	static final int DB_VERSION = 15;
 	static final String TABLE = "timeline";
+	
 	static final String C_ID = "_id"; // obligatoire pour cursor...
 	static final String C_TITLE = "title";
 	static final String C_TIME = "time";
@@ -18,7 +20,10 @@ public class DBHelper extends SQLiteOpenHelper {
 	static final String C_FEED = "feed";
 	static final String C_LINK = "link";
 	static final String C_DESC = "description";
-	static final String C_FAVORI = "favori";
+	static final String C_LONGDESC = "longdescription"; // vient du feed special long
+	static final String C_IMAGE = "image"; // vient du feed special long
+	static final String C_LU = "lu"; // on a lu cet article (dans les details?)
+	static final String C_FAVORI = "favori"; 
 	Context context;
 
 	public DBHelper(Context context) {
@@ -36,6 +41,9 @@ public class DBHelper extends SQLiteOpenHelper {
 				+C_FEED+" text,"
 				+C_LINK+" text,"
 				+C_DESC+" text,"
+				+C_LONGDESC+" text,"
+				+C_IMAGE+" text,"
+				+C_LU+" boolean,"
 				+C_FAVORI+" boolean)";
 		db.execSQL(sql);
 		Log.d(TAG,"created db:"+sql);
@@ -49,8 +57,21 @@ public class DBHelper extends SQLiteOpenHelper {
 	}
 
 	public String[] getWebContent(SQLiteDatabase db,long id) {
-		Cursor c=db.rawQuery("select title,link,description from timeline where _id="+id, null);
+		Cursor c=db.rawQuery("select title,link,description,longdescription,image from timeline where _id="+id, null);
 		if( !c.moveToFirst() ) return new String[] {"(pas de titre)","","(pas de description)"};
-		return new String[] {c.getString(0),c.getString(1),c.getString(2)};
+		return new String[] {c.getString(0),c.getString(1),c.getString(2),c.getString(3),c.getString(4)};
 	}
+	
+	//
+	// utility stuff
+	//
+	
+	public void resetDB() {
+		SQLiteDatabase db;
+		db=getWritableDatabase();
+		int k=db.delete(DBHelper.TABLE, null, null);
+		Log.d(TAG,"deleted "+k+" items.");
+		db.close();
+	}
+	
 }

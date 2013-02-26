@@ -13,11 +13,10 @@ import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.preference.PreferenceManager;
 import android.util.Log;
-import android.widget.Toast;
 
 
 
-public class RssService extends IntentService {
+public class ServiceRss extends IntentService {
 
 	//public static final String NEW_STATUS_INTENT="com.seboid.udem.newstatus";
 
@@ -26,19 +25,19 @@ public class RssService extends IntentService {
 	static final int DELAY=10*60*1000; // 10 minutes
 	static final int SHORT_DELAY=5*1000; // 5 sec
 
-	static final String[] feeds = new String[] {
-		"recherche",
-		"enseignement",
-		"campus",
-		"international",
-		"culture",
-		"sports",
-		"multimedia",
-		"revue-de-presse"
+	static final String[][] feeds = {
+		{"recherche","13"},
+		{"enseignement","12"},
+		{"campus","5"},
+		{"international","14"},
+		{"culture","16"},
+		{"sports","17"},
+		{"multimedia","8"},
+		{"revue-de-presse","6"}
 	};
 
 
-	public RssService() {
+	public ServiceRss() {
 		super("rssservice");
 	}
 
@@ -49,17 +48,17 @@ public class RssService extends IntentService {
 		return super.onStartCommand(intent, flags, startId);
 	}
 
-	
+
 	@Override
 	public void onHandleIntent(Intent intent) {
-//	Toast.makeText(this, "Handle Service!",Toast.LENGTH_SHORT).show();
+		//	Toast.makeText(this, "Handle Service!",Toast.LENGTH_SHORT).show();
 		Log.d("rssservice","onHandle!");
 
 		// commence par demander un "busy" si l'app ecoute ce signal...
 		Intent in=new Intent("com.seboid.udem.BUSY");
 		in.putExtra("busy",true);
 		sendBroadcast(in);
-		
+
 		NotificationManager mNM;
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 
@@ -67,7 +66,7 @@ public class RssService extends IntentService {
 
 		long past=0;
 
-		SharedPreferences preferences=PreferenceManager.getDefaultSharedPreferences(RssService.this);
+		SharedPreferences preferences=PreferenceManager.getDefaultSharedPreferences(ServiceRss.this);
 		int nb=0;
 
 		SQLiteDatabase db=dbH.getWritableDatabase();
@@ -76,18 +75,21 @@ public class RssService extends IntentService {
 		for(int j=0;j<feeds.length;j++) {
 			past = (long)(System.currentTimeMillis()/1000 - Long.parseLong(preferences.getString("savetime","365"))*24*3600);
 
-			boolean use = preferences.getBoolean(feeds[j], false);
-			Log.d(TAG,"Loading "+feeds[j]+" : "+use);
+			String feed=feeds[j][0];
+			String feedExtra=feeds[j][1];
+
+			boolean use = preferences.getBoolean(feed, false);
+			Log.d(TAG,"Loading "+feed+" : "+use);
 			if( !use ) {
 				// remove this feed completely
-				int k=db.delete(DBHelper.TABLE, DBHelper.C_FEED+" = '"+feeds[j]+"'", null);
-				Log.d(TAG,"deleted feed "+feeds[j]+" ("+k+" messages)");
+				int k=db.delete(DBHelper.TABLE, DBHelper.C_FEED+" = '"+feed+"'", null);
+				//Log.d(TAG,"deleted feed "+feed+" ("+k+" messages)");
 				continue;
 			}
 
-			rss=new RssAPI("http://www.nouvelles.umontreal.ca/"+feeds[j]+"/rss.html");
+			rss=new RssAPI("http://www.nouvelles.umontreal.ca/"+feed+"/rss.html");
 			if( rss==null || rss.erreur!=null ) {
-				Log.d(TAG,"rss null for feed "+feeds[j]+". skipping");
+				//Log.d(TAG,"rss null for feed "+feed+". skipping");
 				continue;
 			}
 
@@ -100,7 +102,7 @@ public class RssService extends IntentService {
 					Log.d("service","skip "+hm.get("time")+" : "+hm.get("title"));
 					continue;
 				}
-				Log.d("service","data "+hm.get("time")+" : "+hm.get("title"));
+				//Log.d("service","data "+hm.get("time")+" : "+hm.get("title"));
 
 
 				// ajouter a la base de donnee
@@ -109,9 +111,15 @@ public class RssService extends IntentService {
 				val.put(DBHelper.C_TITLE,(String)hm.get("title"));
 				val.put(DBHelper.C_TIME, (Integer)hm.get("time"));
 				val.put(DBHelper.C_CATEGORY, (String)hm.get("category"));
-				val.put(DBHelper.C_FEED, feeds[j]);
+				val.put(DBHelper.C_FEED, feed);
 				val.put(DBHelper.C_LINK, (String)hm.get("link"));
 				val.put(DBHelper.C_DESC, (String)hm.get("description"));
+				// ces deux infos viennent du prochain feed...
+				// au cas ou il n'y aurait pas de feed extra, on reutilise la description pour la longue.
+				val.put(DBHelper.C_LONGDESC, (String)hm.get("description"));
+				val.put(DBHelper.C_IMAGE, "");
+				val.put(DBHelper.C_LU, false);
+
 
 				try {
 					db.insertOrThrow(DBHelper.TABLE, null, val);
@@ -120,17 +128,43 @@ public class RssService extends IntentService {
 				}
 			}
 
+			// extra feed pour obtenir la description longue et l'image
+			if( feedExtra==null ) continue;
+
+			rss=new RssAPI("http://www.nouvelles.umontreal.ca/index.php?option=com_ijoomla_rss&act=xml&sec="+feedExtra+"&feedtype=RSS2.0");
+			if( rss==null || rss.erreur!=null ) {
+				Log.d(TAG,"rss null for feed "+feed+". skipping");
+				continue;
+			}
+
+			for(int i=0;i<rss.data.size();i++) {
+				hm=rss.data.get(i);
+
+				if( (Integer)hm.get("time") < past ) {
+					//Log.d("service","skip "+hm.get("time")+" : "+hm.get("title"));
+					continue;
+				}
+				//Log.d("service","dataX "+hm.get("time")+" : "+hm.get("title"));
+
+				// ajouter a la base de donnee
+				val.clear();
+				int id=(Integer)(((String)hm.get("link")).hashCode());
+				val.put(DBHelper.C_LONGDESC, (String)hm.get("description"));
+				val.put(DBHelper.C_IMAGE, (String)hm.get("image"));
+
+				try {
+					db.update(DBHelper.TABLE, val, DBHelper.C_ID+"="+id , null);
+				} catch ( SQLException e ) {
+					Log.d("service","probleme de update dans la DB :-(");
+				}
+			}
+
 		}
 
 		//// now remove everything that is too old...
-		try {
-			int k=db.delete(DBHelper.TABLE, DBHelper.C_TIME+" < "+past, null);
-			Log.d(TAG,"removed "+k+" old messages");
-			//publishProgress(k+" messages enlevé(s)");
-		} catch ( ClassCastException e ) {
-			Log.d(TAG,"impossible de parser la preference duree de vie");
-		}
-
+		int k=db.delete(DBHelper.TABLE, DBHelper.C_TIME+" < "+past, null);
+		Log.d(TAG,"removed "+k+" old messages");
+	
 		// libere la memoire
 		rss=null;
 		db.close();
@@ -140,7 +174,7 @@ public class RssService extends IntentService {
 		in=new Intent("com.seboid.udem.BUSY");
 		in.putExtra("busy",false);
 		sendBroadcast(in);
-		
+
 		if( nb==0 ) showNotification(mNM,"Aucun nouveau message.");
 		if( nb>0 ) showNotification(mNM,nb+(nb>1?" nouveaux messages.":" nouveau message."));
 
@@ -154,7 +188,7 @@ public class RssService extends IntentService {
 
 		// The PendingIntent to launch our activity if the user selects this notification
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				new Intent(this, UdeMActivity.class), 0);
+				new Intent(this, ActivityDebug.class), 0);
 
 		// Set the info for the views that show in the notification panel.
 		notification.setLatestEventInfo(this,"UdeM Nouvelles",msg, contentIntent);

@@ -22,11 +22,12 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 
-public class UdeMActivity extends Activity implements OnClickListener {
+public class ActivityDebug extends Activity implements OnClickListener {
 
 	
 	ToggleButton serviceTog;
 	Button oneShot;
+	Button resetDB;
 	
 	IntentFilter busyFilter;
 	BusyReceiver busyR;
@@ -40,7 +41,7 @@ public class UdeMActivity extends Activity implements OnClickListener {
 		// doit etre appelle avant le setContentView
 		getWindow().requestFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
-		setContentView(R.layout.main);
+		setContentView(R.layout.debug);
 
 		serviceTog=(ToggleButton)findViewById(R.id.serviceToggle);
 		serviceTog.setOnClickListener(this);
@@ -48,6 +49,9 @@ public class UdeMActivity extends Activity implements OnClickListener {
 		oneShot=(Button)findViewById(R.id.oneshot);
 		oneShot.setOnClickListener(this);
 
+		resetDB=(Button)findViewById(R.id.resetdb);
+		resetDB.setOnClickListener(this);
+		
 		((Button)findViewById(R.id.rssbasic)).setOnClickListener(this);
 		((Button)findViewById(R.id.rss)).setOnClickListener(this);
 		((Button)findViewById(R.id.rsscat)).setOnClickListener(this);     
@@ -56,7 +60,7 @@ public class UdeMActivity extends Activity implements OnClickListener {
 		//Toast.makeText(this, "UdeM onCreate",Toast.LENGTH_SHORT).show();
 
 		PendingIntent pi = PendingIntent.getService(this.getApplicationContext(), 0,
-				new Intent(this,RssService.class)
+				new Intent(this,ServiceRss.class)
 		, PendingIntent.FLAG_UPDATE_CURRENT);
 		AlarmManager am =(AlarmManager)this.getSystemService(Context.ALARM_SERVICE);
 		//		am.setInexactRepeating(AlarmManager.RTC, System.currentTimeMillis(), 60000, pi);
@@ -103,26 +107,29 @@ public class UdeMActivity extends Activity implements OnClickListener {
 	public void onClick(View v) {
 		switch(v.getId()) {
 		case R.id.rssbasic:
-			startActivity(new Intent(this, UdeMRssListActivity.class));
+			startActivity(new Intent(this, ActivityUdeMNouvelles.class));
 			break;
 		case R.id.rss:
-			startActivity(new Intent(this, UdeMRssFeedActivity.class));
+			startActivity(new Intent(this, ActivityUdeMListFeed.class));
 			break;
 		case R.id.rsscat:
-			startActivity(new Intent(this, UdeMRssCatActivity.class));
+			startActivity(new Intent(this, ActivityUdeMListCat.class));
 			break;
 		case R.id.rssfeedcat:
-			startActivity(new Intent(this, UdeMRssFeedCatActivity.class));
+			startActivity(new Intent(this, ActivityUdeMListFC.class));
+			break;
+		case R.id.resetdb:
+			resetDB();
 			break;
 		case R.id.oneshot:
-			Toast.makeText(UdeMActivity.this, "service is "+RssService.class.getName(),Toast.LENGTH_LONG).show();
+			Toast.makeText(ActivityDebug.this, "service is "+ServiceRss.class.getName(),Toast.LENGTH_LONG).show();
 			//			Intent in = new Intent(RssService.class.getName());
-			Intent in = new Intent(UdeMActivity.this,RssService.class);
+			Intent in = new Intent(ActivityDebug.this,ServiceRss.class);
 
 
 
 			//in.putExtra("oneshot","true");
-			UdeMActivity.this.startService(in);
+			ActivityDebug.this.startService(in);
 			break;
 			//		case R.id.serviceToggle:
 			//			if(serviceRunning) {
@@ -136,7 +143,7 @@ public class UdeMActivity extends Activity implements OnClickListener {
 			//			Toast.makeText(UdeMAcsetProgressBarIndeterminateVisibility(true);tivity.this,serviceRunning?"Service activé":"Service arrêté",Toast.LENGTH_LONG).show();
 			//			break;
 		default:
-			Toast.makeText(UdeMActivity.this, "pas disponible!",Toast.LENGTH_LONG).show();
+			Toast.makeText(ActivityDebug.this, "pas disponible!",Toast.LENGTH_LONG).show();
 		}
 	}
 
@@ -152,11 +159,11 @@ public class UdeMActivity extends Activity implements OnClickListener {
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch(item.getItemId()) {
 		case R.id.menurefresh:			
-			startService(new Intent(this,RssService.class));
+			startService(new Intent(this,ServiceRss.class));
 			break;
 		case R.id.menuprefs:
 			// Launch Preference activity
-			startActivity(new Intent(this, myPreferencesActivity.class));
+			startActivity(new Intent(this, ActivityPreferences.class));
 			break;
 		}
 		return true;
@@ -176,7 +183,11 @@ public class UdeMActivity extends Activity implements OnClickListener {
 	}
 
 
-
+	// vide la db
+	void resetDB() {
+		DBHelper dbH=new DBHelper(this);
+		dbH.resetDB();
+	}
 
 
 

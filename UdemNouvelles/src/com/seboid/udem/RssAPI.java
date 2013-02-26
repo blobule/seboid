@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.ParseException;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -28,6 +27,8 @@ import android.util.Log;
 // une classe qui charge une page web et parse le contenu XML feed rss
 // NOTE: cette classe NE PEUT PAS toucher à l'interface
 //
+// c'est cette classe qui est utilisee par ServiceRss
+//
 
 public class RssAPI {
 	// null si pas d'erreur
@@ -37,6 +38,11 @@ public class RssAPI {
 	ArrayList<HashMap<String, Object>> data;
 	
 //	HashMap<String,Integer> categoryIcons;
+
+	// le feed peut etre un des deux sorte de feed de l' UdeM..
+	// par exemple, pour campus:
+	// "http://www.nouvelles.umontreal.ca/"+"campus"+"/rss.html"
+	// "http://www.nouvelles.umontreal.ca/index.php?option=com_ijoomla_rss&act=xml&sec="+"5"+"&feedtype=RSS2.0"
 	
 	RssAPI(String urlRss) {
 		//Log.d("rss","loading "+urlRss);		
@@ -65,13 +71,7 @@ public class RssAPI {
 
 			data=new ArrayList<HashMap<String, Object>>();
 			
-//			categoryIcons=new HashMap<String,Integer>();
-//			categoryIcons.put("Cinéma",android.R.drawable.ic_menu_camera);
-//			categoryIcons.put("Arts de la scène",android.R.drawable.ic_menu_myplaces);
-//			categoryIcons.put("Belles soirées",android.R.drawable.ic_menu_zoom);
-
 			SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy HH:mm:ss ZZZZZ",Locale.CANADA);
-			
 
 			for(int i=0;i<items.getLength();i++) {
 				Node item = items.item(i);
@@ -92,6 +92,13 @@ public class RssAPI {
 				hm.put("category",  n.item(0).getChildNodes().item(0).getNodeValue());
 				n = e.getElementsByTagName("pubDate");
 				hm.put("pubDate",n.item(0).getChildNodes().item(0).getNodeValue());
+				n = e.getElementsByTagName("image");
+				if( n.getLength()>0 ) {
+					String iurl = n.item(0).getChildNodes().item(0).getNodeValue();
+					// parfois un url contient des espaces brutes...
+					hm.put("image",iurl.replace(" ","%20"));
+				}else hm.put("image","");
+
 				// process la date
 				// on saute la journee au debut de la date
 				Date date = sdf.parse((String) hm.get("pubDate"),new ParsePosition(5));
@@ -99,10 +106,6 @@ public class RssAPI {
 				CharSequence cs=android.text.format.DateUtils.getRelativeTimeSpanString(date.getTime());
 				hm.put("since",cs);
 				
-				// cas special, l'image
-	//			hm.put("icon",android.R.drawable.ic_menu_myplaces);
-//				hm.put("icon",categoryIcons.get(hm.get("category")));
-
 				data.add(hm);
 			}
 

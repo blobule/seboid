@@ -12,7 +12,7 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 
-public class UdeMRssCatActivity extends Activity  {
+public class ActivityUdeMListCat extends Activity  {
 
 	ListView lv;
 	SimpleCursorAdapter adapter; // pour afficher les lignes
@@ -24,7 +24,7 @@ public class UdeMRssCatActivity extends Activity  {
 	// Mapping pour l'affiche. from contient les id des elements d'une rangees dans le mapping
 	// to contient les id des elements d'interface
 	static final String[] from = new String[] { "category","count(*)"};
-	static final int[] to = new int[] {R.id.rowcat,R.id.rowdate };
+	static final int[] to = new int[] {R.id.rowcat,R.id.rowcatcount };
 
 	/** Called when the activity is first created. */
 	@Override
@@ -41,7 +41,7 @@ public class UdeMRssCatActivity extends Activity  {
 				//				in.putExtra("selection",cursor.getString(1)); // colonne 0 = _id...
 				//				startActivity(in);
 
-				Intent in = new Intent(UdeMRssCatActivity.this, UdeMWebActivity.class);
+				Intent in = new Intent(ActivityUdeMListCat.this, ActivityUdeMWeb.class);
 				in.putExtra("where","category = '"+cursor.getString(1)+"'");
 				in.putExtra("title",cursor.getString(1));
 				startActivity(in);

@@ -16,17 +16,17 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="cinema"
-            android:textColor="#ffff00"
-            android:textSize="16dp" />
+            android:textColor="#ff9000"
+            android:textSize="10sp" />
 
         <TextView
-            android:id="@+id/rowdate"
+            android:id="@+id/rowcatcount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0"
             android:text="il y a 2 jours"
-            android:textColor="#00ffff"
-            android:textSize="16dp"/>
+            android:textColor="#33b5e5"
+            android:textSize="10sp" />
 
     </LinearLayout>
 
@@ -35,6 +35,7 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_weight="0"
-        android:textSize="20dp" android:text="un film chouette"/>
+        android:text="un film chouette"
+        android:textSize="12sp" />
 
 </LinearLayout>

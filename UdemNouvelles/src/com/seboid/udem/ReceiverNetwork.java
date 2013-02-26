@@ -5,10 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.util.Log;
 import android.widget.Toast;
 
-public class NetworkReceiver extends BroadcastReceiver {
+public class ReceiverNetwork extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context ctx, Intent in) {
 		boolean netDown = in.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY,false);

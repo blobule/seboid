@@ -20,7 +20,7 @@
             android:textSize="16dp" />
 
         <TextView
-            android:id="@+id/rowdate"
+            android:id="@+id/rowcatcount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="0"

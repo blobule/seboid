@@ -15,7 +15,6 @@ import android.view.View.OnClickListener;
 import android.view.Window;
 import android.webkit.WebView;
 import android.widget.ImageButton;
-import android.widget.Toast;
 
 
 
@@ -25,7 +24,7 @@ import android.widget.Toast;
 // on recoit en parametre un "id"
 //
 
-public class UdeMWebActivity extends Activity  {
+public class ActivityUdeMWeb extends Activity  {
 
 	private ViewPager awesomePager;
 	private AwesomePagerAdapter awesomeAdapter;    
@@ -40,7 +39,7 @@ public class UdeMWebActivity extends Activity  {
 	SQLiteDatabase db;
 	Cursor cursor;
 
-	long id;
+	long id; // le id peut etre positif ou negatif. =0 signifie pas de id. On commence au debut.
 	String where;
 
 	/** Called when the activity is first created. */
@@ -67,12 +66,12 @@ public class UdeMWebActivity extends Activity  {
 
 		//titreView.setText(nice);
 
-		partager=(ImageButton)findViewById(R.id.partager);
+		partager=(ImageButton)findViewById(R.id.detail_partager);
 		partager.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				int current=UdeMWebActivity.this.awesomePager.getCurrentItem();
-				UdeMWebActivity.this.cursor.moveToPosition(current);
+				int current=ActivityUdeMWeb.this.awesomePager.getCurrentItem();
+				ActivityUdeMWeb.this.cursor.moveToPosition(current);
 				final String title=cursor.getString(1);
 				final String body=makeWebBody(false); // no style please
 
@@ -113,7 +112,7 @@ public class UdeMWebActivity extends Activity  {
 		startManagingCursor(cursor);
 
 		cursor.moveToFirst();
-		if( id>0 ) {
+		if( id!=0 ) {
 			while( !cursor.isAfterLast() && cursor.getLong(0)!=id ) cursor.moveToNext();
 		}
 
@@ -177,7 +176,7 @@ public class UdeMWebActivity extends Activity  {
 
 		@Override
 		public int getCount() {
-			return UdeMWebActivity.this.cursor.getCount();
+			return ActivityUdeMWeb.this.cursor.getCount();
 		}
 
 		/**
@@ -193,7 +192,7 @@ public class UdeMWebActivity extends Activity  {
 		 */
 		@Override
 		public Object instantiateItem(View collection, int position) {
-			WebView web=new WebView(UdeMWebActivity.this);
+			WebView web=new WebView(ActivityUdeMWeb.this);
 			web.setScrollContainer(true);
 			web.setScrollbarFadingEnabled(true);
 			web.setBackgroundColor(0xff000000);
@@ -203,7 +202,7 @@ public class UdeMWebActivity extends Activity  {
 			//			tv.setTextColor(Color.WHITE);
 			//			tv.setTextSize(30);
 
-			UdeMWebActivity.this.cursor.moveToPosition(position);
+			ActivityUdeMWeb.this.cursor.moveToPosition(position);
 			// c'est toujours le titre du prochain article...
 			//UdeMWebActivity.this.setTitle(cursor.getString(1));			
 

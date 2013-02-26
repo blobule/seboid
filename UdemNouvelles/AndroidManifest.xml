@@ -14,47 +14,56 @@
         android:icon="@drawable/ic_launcher"
         android:label="UdeM Nouvelles" >
         <activity
-            android:name=".UdeMActivity"
+            android:name=".ActivityDebug"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name=".UdeMRssListActivity"
+            android:name=".ActivityUdeMNouvelles"
             android:label="UdeM|Nouvelles" >
         </activity>
         <activity
-            android:name=".UdeMWebActivity"
+            android:name=".ActivityUdeMWeb"
             android:label="UdeM|Nouvelles" >
         </activity>
         <activity
-            android:name=".UdeMRssFeedActivity"
+            android:name=".ActivityUdeMDetail"
+            android:label="UdeM|Nouvelles" >
+        </activity>
+        <activity
+            android:name=".ActivityUdeMListFeed"
             android:label="@string/app_udemrssFeedName" >
         </activity>
         <activity
-            android:name=".UdeMRssCatActivity"
+            android:name=".ActivityUdeMListCat"
             android:label="@string/app_udemrssCatName" >
         </activity>
+          <activity
+            android:name=".ActivityUdeMListFC"
+            android:label="UdeM|Sources et Cat" >
+        </activity>
         <activity
-            android:name=".UdeMRssFeedCatActivity"
+            android:name=".ActivityUdeMListFeedCat"
             android:label="@string/app_udemrssFeedCatName" >
         </activity>
         <activity
-            android:name=".myPreferencesActivity"
+            android:name=".ActivityPreferences"
             android:label="@string/app_myPreferencesName" >
         </activity>
 
-        <service android:name=".RssService" >
+        <service android:name=".ServiceRss" >
         </service>
 
-        <receiver android:name=".BootReceiver" >
+        <receiver android:name=".ReceiverBoot" >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
-        <receiver android:name=".NetworkReceiver" >
+        <receiver android:name=".ReceiverNetwork" >
             <intent-filter>
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
@@ -71,4 +80,5 @@
                 android:resource="@xml/widget" />
         </receiver>
     </application>
+
 </manifest>

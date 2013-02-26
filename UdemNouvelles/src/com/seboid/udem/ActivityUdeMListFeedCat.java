@@ -2,7 +2,6 @@ package com.seboid.udem;
 
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -12,7 +11,7 @@ import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.ExpandableListView.OnGroupClickListener;
 import android.widget.SimpleCursorTreeAdapter;
 
-public class UdeMRssFeedCatActivity extends Activity  {
+public class ActivityUdeMListFeedCat extends Activity  {
 
 	ExpandableListView lv;
 	myFeedCatAdapter adapter; // pour afficher les lignes
@@ -25,9 +24,9 @@ public class UdeMRssFeedCatActivity extends Activity  {
 	// to contient les id des elements d'interface
 	static final String[] groupFrom = new String[] { "feed","count(*)"};
 //	static final int[] groupTo = new int[] {/*R.id.rowtitle*/ android.R.id.text1,android.R.id.text2};
-	static final int[] groupTo = new int[] {R.id.rowcat,R.id.rowdate };
+	static final int[] groupTo = new int[] {R.id.rowcat,R.id.rowcatcount };
 	static final String[] childFrom = new String[] { "category","count(*)"};
-	static final int[] childTo = new int[] {R.id.rowcat,R.id.rowdate };
+	static final int[] childTo = new int[] {R.id.rowcat,R.id.rowcatcount };
 
 
 	/** Called when the activity is first created. */
