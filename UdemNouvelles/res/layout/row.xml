@@ -16,8 +16,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="cinema"
-            android:textColor="#ff9000"
-            android:textSize="10sp" />
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="#ff9000" />
 
         <TextView
             android:id="@+id/rowcatcount"
@@ -25,8 +25,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="0"
             android:text="il y a 2 jours"
-            android:textColor="#33b5e5"
-            android:textSize="10sp" />
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="#33b505" />
 
     </LinearLayout>
 
@@ -36,6 +36,6 @@
         android:layout_height="wrap_content"
         android:layout_weight="0"
         android:text="un film chouette"
-        android:textSize="12sp" />
+        android:textAppearance="?android:attr/textAppearanceMedium" />
 
 </LinearLayout>

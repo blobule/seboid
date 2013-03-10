@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <string name="action_settings">Settings</string>
     <string name="hello">Hello World, UdeMActivity!</string>
     <string name="app_name">UdeM</string>
     <string name="boutonrssbasic">Les Nouvelles</string>
@@ -11,7 +12,17 @@
     <string name="app_udemrssFeedCatName">UdeM : Sources + Categories</string>
     <string name="app_myPreferencesName">Préférences</string>
 
-       <string-array name="PreferenceFruitsItems">
+    <!--  dans le menu -->
+    <string name="preferences">Préférences</string>
+    <string name="mettre_a_jour">Mettre à jour</string>
+    <string name="partager">Partager</string>
+    <string name="favori">Conserver</string>
+    
+    <!--  pour le share -->
+    <string name="sharewith">Partager avec...</string>
+    
+
+    <string-array name="PreferenceFruitsItems">
         <item>Banane</item>
         <item>Fraise</item>
         <item>Pomme</item>
@@ -20,6 +31,7 @@
         <item>111</item>
         <item>222</item>
     </string-array>
-        <string name="boutonrssFeedCat">Les Nouvelles (F+C)</string>
-    
+
+    <string name="boutonrssFeedCat">Les Nouvelles (F+C)</string>
+
 </resources>

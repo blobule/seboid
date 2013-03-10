@@ -3,6 +3,7 @@ package com.seboid.udem;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -24,11 +25,14 @@ import android.widget.ToggleButton;
 
 public class ActivityDebug extends Activity implements OnClickListener {
 
-	
+
 	ToggleButton serviceTog;
 	Button oneShot;
 	Button resetDB;
-	
+
+	// pour activer/desactiver un bout de menu
+	MenuItem menuRefresh=null;
+
 	IntentFilter busyFilter;
 	BusyReceiver busyR;
 
@@ -51,7 +55,7 @@ public class ActivityDebug extends Activity implements OnClickListener {
 
 		resetDB=(Button)findViewById(R.id.resetdb);
 		resetDB.setOnClickListener(this);
-		
+
 		((Button)findViewById(R.id.rssbasic)).setOnClickListener(this);
 		((Button)findViewById(R.id.rss)).setOnClickListener(this);
 		((Button)findViewById(R.id.rsscat)).setOnClickListener(this);     
@@ -66,11 +70,11 @@ public class ActivityDebug extends Activity implements OnClickListener {
 		//		am.setInexactRepeating(AlarmManager.RTC, System.currentTimeMillis(), 60000, pi);
 		am.cancel(pi);
 		Log.d("udem","setup alarm");
-		
+
 		// le busy receiver
 		busyR=new BusyReceiver();
 		busyFilter=new IntentFilter("com.seboid.udem.BUSY");
-		
+
 	}
 
 	@Override
@@ -89,19 +93,19 @@ public class ActivityDebug extends Activity implements OnClickListener {
 		}		
 		serviceTog.setChecked(auto);
 		oneShot.setEnabled(true);
-		
+
 		// enregistre le receiver pour l'etat busy
 		registerReceiver(busyR,busyFilter);
 	}
 
-	
+
 	@Override
 	protected void onPause() {
 		// TODO Auto-generated method stub
 		super.onPause();
 		unregisterReceiver(busyR);
 	}
-	
+
 
 	@Override
 	public void onClick(View v) {
@@ -152,13 +156,18 @@ public class ActivityDebug extends Activity implements OnClickListener {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.principal, menu);
+
+		// trouve l'item mise-a-jour pour pouvoir le desactiver au besoin...
+		// ok pour android>=3.0, mais pas appelle tant qu' on ne presse pas menu dans android 2.33
+		menuRefresh=menu.findItem(R.id.menurefresh);
+
 		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch(item.getItemId()) {
-		case R.id.menurefresh:			
+		case R.id.menurefresh:
 			startService(new Intent(this,ServiceRss.class));
 			break;
 		case R.id.menuprefs:
@@ -175,10 +184,48 @@ public class ActivityDebug extends Activity implements OnClickListener {
 	// on veut afficher busy quand le service travaille...
 	//
 	class BusyReceiver extends BroadcastReceiver {
+		ProgressDialog mDialog=null;
+
 		@Override
 		public void onReceive(Context ctx, Intent in) {
-			boolean busy = in.getExtras().getBoolean("busy");
-			setProgressBarIndeterminateVisibility(busy);
+			//boolean busy = in.getExtras().getBoolean("busy");
+			//setProgressBarIndeterminateVisibility(busy);
+
+			String msg=in.getExtras().getString("msg");
+			int progress=in.getExtras().getInt("progress",-1);
+
+			if( progress<100 ) {
+				setProgressBarIndeterminateVisibility(true);
+				// pour android >3.0
+				if( menuRefresh!=null ) {
+					menuRefresh.setVisible(false);
+					menuRefresh.setEnabled(false);
+				}
+			}else{
+				setProgressBarIndeterminateVisibility(false);
+				if( menuRefresh!=null ) {
+					menuRefresh.setEnabled(true);
+					menuRefresh.setVisible(true);
+				}
+
+			}
+
+			//			if( mDialog==null ) {
+			//				mDialog = new ProgressDialog(ActivityDebug.this); // This being a context, could try getBaseContext() as well
+			//				mDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+			//				if( msg==null ) mDialog.setMessage("Mise à jour...");
+			//				else mDialog.setMessage(msg);
+			//				mDialog.show();
+			//				mDialog.setProgress(0);
+			//				mDialog.setMax(100);
+			//			}
+			//			if( progress>=100 ) {
+			//				mDialog.dismiss();
+			//				mDialog=null;
+			//			}else{
+			//				if( msg!=null ) mDialog.setMessage(msg);
+			//				mDialog.setProgress(progress);
+			//			}
 		}		
 	}
 

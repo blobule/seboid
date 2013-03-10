@@ -4,18 +4,20 @@
     android:versionCode="1"
     android:versionName="1.0" >
 
-    <uses-sdk android:minSdkVersion="10" />
+    <uses-sdk
+        android:minSdkVersion="10"
+        android:targetSdkVersion="17" />
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
+        android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
-        android:label="UdeM Nouvelles" >
-        <activity
-            android:name=".ActivityDebug"
-            android:label="@string/app_name" >
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity android:name=".ActivityDebug" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -42,7 +44,7 @@
             android:name=".ActivityUdeMListCat"
             android:label="@string/app_udemrssCatName" >
         </activity>
-          <activity
+        <activity
             android:name=".ActivityUdeMListFC"
             android:label="UdeM|Sources et Cat" >
         </activity>
@@ -79,6 +81,12 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget" />
         </receiver>
+
+        <provider
+            android:name=".UdeMContentProvider"
+            android:authorities="com.seboid.udem.nouvelles"
+            android:exported="true" >
+        </provider>
     </application>
 
 </manifest>

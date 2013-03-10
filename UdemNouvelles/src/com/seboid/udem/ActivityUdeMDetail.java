@@ -16,28 +16,26 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
-import android.database.SQLException;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.webkit.WebView;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 
 
@@ -46,7 +44,9 @@ import android.widget.Toast;
 //
 // on recoit en parametre un "id"
 //
-// plutot que de creer un webview, on va afficher une image et un textview scrollable
+// On affiche un titre, une image, et le contenu en webview.
+//
+// Cette activite retourne le id de la derniere page visitee
 //
 
 public class ActivityUdeMDetail extends Activity  {
@@ -54,10 +54,9 @@ public class ActivityUdeMDetail extends Activity  {
 	private ViewPager awesomePager;
 	private AwesomePagerAdapter awesomeAdapter;    
 
-	ImageButton partager;
 
-	DBHelper dbH;
-	SQLiteDatabase db;
+//	DBHelper dbH;
+//	SQLiteDatabase db;
 	Cursor cursor;
 
 	// pour gerer la lecture (ce qui est lu ou pas lu)
@@ -88,6 +87,7 @@ public class ActivityUdeMDetail extends Activity  {
 		Intent sender=getIntent();
 		id=sender.getLongExtra("id",0);
 		Log.d("detail","looking for id="+id);
+		
 
 		String t=sender.getStringExtra("title");
 		if( t!=null ) {
@@ -107,27 +107,6 @@ public class ActivityUdeMDetail extends Activity  {
 
 		//titreView.setText(nice);
 
-		partager=(ImageButton)findViewById(R.id.detail_partager);
-//		partager.setOnClickListener(new OnClickListener() {
-//			@Override
-//			public void onClick(View v) {
-//				int current=ActivityUdeMDetail.this.awesomePager.getCurrentItem();
-//				ActivityUdeMDetail.this.cursor.moveToPosition(current);
-//				final String title=cursor.getString(1);
-//				final String body=makeWebBody(false); // no style please
-//
-//				Intent intent = new Intent(Intent.ACTION_SEND);
-//				//				intent.setType("text/plain");
-//				//				intent.putExtra(Intent.EXTRA_TEXT, "http://www.umontreal.ca");
-//
-//				intent.setType("text/html");
-//				intent.putExtra(android.content.Intent.EXTRA_SUBJECT, title);
-//				intent.putExtra(android.content.Intent.EXTRA_TEXT, Html.fromHtml(body));
-//				startActivity(Intent.createChooser(intent, "Email:"));
-//				//				startActivity(Intent.createChooser(intent, "Share with"));
-//			}
-//
-//		});
 
 
 		//		web=(WebView)findViewById(R.id.web);
@@ -136,22 +115,26 @@ public class ActivityUdeMDetail extends Activity  {
 		//		web.setBackgroundColor(0xff000000 /*0xff333333*/);
 
 		// access a la database
-		dbH=new DBHelper(this);
-
-
+		//dbH=new DBHelper(this);
 	}
 
-
+	@Override
+	public void onBackPressed() {
+		Intent intent = new Intent();
+		intent.putExtra("pos",awesomePager.getCurrentItem());
+		setResult(RESULT_OK, intent);
+		finish();
+	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
 		Log.d("rss","resume!");
 
-		db=dbH.getReadableDatabase();
+		//db=dbH.getReadableDatabase();
 
-		// get data from database
-		cursor=db.query(DBHelper.TABLE,new String[] {
+		
+		String[] projection=new String[] {
 				DBHelper.C_ID,
 				DBHelper.C_TITLE,
 				DBHelper.C_LINK,
@@ -160,8 +143,12 @@ public class ActivityUdeMDetail extends Activity  {
 				DBHelper.C_LONGDESC,
 				DBHelper.C_IMAGE,
 				DBHelper.C_LU
-		},where, null, null, null, DBHelper.C_TIME+" DESC");
-		startManagingCursor(cursor);
+		};
+		// get data from database
+	    cursor = getContentResolver().query(UdeMContentProvider.CONTENT_URI, projection, where, null,DBHelper.C_TIME+" DESC");
+
+//		cursor=db.query(DBHelper.TABLE,projection,where, null, null, null, DBHelper.C_TIME+" DESC");
+//		startManagingCursor(cursor);
 
 		// on va avoir besoin des ID de toutes les rangeees... pour gerer le LU
 		lecture = new Lecture[cursor.getCount()];
@@ -189,9 +176,40 @@ public class ActivityUdeMDetail extends Activity  {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
+	}
 
-		// ferme le database
-		db.close();
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		MenuInflater inflater = getMenuInflater();
+		inflater.inflate(R.menu.detail, menu);		
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch(item.getItemId()) {
+		case R.id.menushare:
+			shareIt();
+			break;
+		}
+		return true;
+	}
+
+	void shareIt() {
+		int current=awesomePager.getCurrentItem();
+		cursor.moveToPosition(current);
+		final String title=cursor.getString(1);
+		final String body=
+				"<style type=\"text/css\">body { color:#000000; background-color:#ffffff } a { color:#3030ff; } h2 { color:#000000; } </style><body>"
+						+cursor.getString(5)+"</body>";
+
+		Intent intent = new Intent(Intent.ACTION_SEND);
+
+		intent.setType("text/html");
+		intent.putExtra(android.content.Intent.EXTRA_SUBJECT, title);
+		intent.putExtra(android.content.Intent.EXTRA_TEXT, Html.fromHtml(body));
+		//intent.putExtra(android.content.Intent.EXTRA_HTML_TEXT,body);
+		startActivity(Intent.createChooser(intent, getString(R.string.sharewith)));
 	}
 
 	//	// affiche de l'info description web
@@ -288,8 +306,13 @@ public class ActivityUdeMDetail extends Activity  {
 			}else{
 				// une image!
 				if( imageCache.containsKey(imgURL) ) {
-					image.setImageDrawable(imageCache.get(imgURL));
-					image.setVisibility(View.VISIBLE);
+					Drawable d=imageCache.get(imgURL);
+					if( d!=null ) {
+						image.setImageDrawable(d);
+						image.setVisibility(View.VISIBLE);
+					}else{
+						image.setVisibility(View.GONE);
+					}
 					loading.setVisibility(View.GONE);
 				}else{
 					// load l'image en background.
@@ -307,7 +330,11 @@ public class ActivityUdeMDetail extends Activity  {
 			//contenu.setMovementMethod(new ScrollingMovementMethod());			
 
 			web.getSettings().setJavaScriptEnabled(false);
-			web.loadDataWithBaseURL(null,"<style type=\"text/css\">body { color:#ffffff; background-color:#000000 } a { color:#8080ff; } h2 { color:#ffffff; } </style><body>"
+			// si light on dark
+			//			web.loadDataWithBaseURL(null,"<style type=\"text/css\">body { color:#ffffff; background-color:#000000 } a { color:#8080ff; } h2 { color:#ffffff; } </style><body>"
+			//					+cursor.getString(5)+"</body>", "text/html","utf-8",null);
+			// si dark on light
+			web.loadDataWithBaseURL(null,"<style type=\"text/css\">body { color:#000000; background-color:#ffffff } a { color:#3030ff; } h2 { color:#000000; } </style><body>"
 					+cursor.getString(5)+"</body>", "text/html","utf-8",null);
 
 
@@ -363,11 +390,15 @@ public class ActivityUdeMDetail extends Activity  {
 				ContentValues val = new ContentValues();
 				val.clear();
 				val.put(DBHelper.C_LU, true);
-				try {
-					db.update(DBHelper.TABLE, val, DBHelper.C_ID+"="+lecture[pos].id , null);
-				} catch ( SQLException e ) {
-					Log.d("detail","probleme de update dans la DB :-(");
-				}
+				
+				Uri itemUri = Uri.parse(UdeMContentProvider.CONTENT_URI + "/" + lecture[pos].id);
+				getContentResolver().update(itemUri, val, DBHelper.C_ID+"="+lecture[pos].id , null);
+				
+//				try {
+//					db.update(DBHelper.TABLE, val, DBHelper.C_ID+"="+lecture[pos].id , null);
+//				} catch ( SQLException e ) {
+//					Log.d("detail","probleme de update dans la DB :-(");
+//				}
 			}
 		}
 
@@ -433,14 +464,16 @@ public class ActivityUdeMDetail extends Activity  {
 				// est-ce que c'est le bon endroit pour faire ca??????
 				// est-ce qu' on a besoin d'un lock sur le hashmap???
 				ActivityUdeMDetail.this.imageCache.put(urls[0],img);
-				try {
-					Thread.sleep(3000);
-				} catch (InterruptedException e) {
-				}
+				//				try {
+				//					Thread.sleep(3000);
+				//				} catch (InterruptedException e) {
+				//				}
 				return img;
 			} catch (ClientProtocolException e) {
 			} catch (IOException e) {
 			} 
+			// on se rappellera qu'il n'y a pas d'image
+			ActivityUdeMDetail.this.imageCache.put(urls[0],null);
 			return null;
 		}
 
@@ -452,12 +485,12 @@ public class ActivityUdeMDetail extends Activity  {
 				image.setImageDrawable(result);
 				image.setVisibility(View.VISIBLE);
 				loading.setVisibility(View.GONE);
-
 				//Animation fadeInAnimation = AnimationUtils.loadAnimation(ActivityUdeMDetail.this, R.anim.fadein);
 				//image.startAnimation(fadeInAnimation);
-
-
-
+			}else{
+				// pas d'image!
+				image.setVisibility(View.GONE);
+				loading.setVisibility(View.GONE);
 			}
 		}
 	}
@@ -469,5 +502,8 @@ public class ActivityUdeMDetail extends Activity  {
 		Lecture(long id,boolean lu) { this.id=id;this.lu=lu; }
 	}
 
+//    i.putExtra(MyTodoContentProvider.CONTENT_ITEM_TYPE, todoUri);
 
+	
+	
 }

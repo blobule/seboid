@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
-     <item android:id="@+id/menufeed" android:title="Sources" android:icon="@android:drawable/ic_menu_sort_by_size"></item>
-     <item android:id="@+id/menucat" android:title="Catégories" android:icon="@android:drawable/ic_menu_sort_by_size"></item>
-   
-    <item android:id="@+id/menurefresh" android:title="Mettre à jour" android:icon="@android:drawable/ic_menu_rotate"></item>
-    <item android:id="@+id/menuprefs" android:title="Preferences" android:icon="@android:drawable/ic_menu_preferences"></item>
-    
+
+    <item
+        android:id="@+id/menurefresh"
+        android:icon="@android:drawable/ic_menu_rotate"
+        android:showAsAction="ifRoom"
+        android:title="@string/mettre_a_jour">
+    </item>
+    <item
+        android:id="@+id/menuprefs"
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:showAsAction="ifRoom"
+        android:title="@string/preferences">
+    </item>
 
 </menu>

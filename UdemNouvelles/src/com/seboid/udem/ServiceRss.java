@@ -1,18 +1,23 @@
 package com.seboid.udem;
 
 import java.util.HashMap;
+import java.util.List;
 
 import android.app.IntentService;
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.Toast;
 
 
 
@@ -36,7 +41,6 @@ public class ServiceRss extends IntentService {
 		{"revue-de-presse","6"}
 	};
 
-
 	public ServiceRss() {
 		super("rssservice");
 	}
@@ -56,8 +60,8 @@ public class ServiceRss extends IntentService {
 
 		// commence par demander un "busy" si l'app ecoute ce signal...
 		Intent in=new Intent("com.seboid.udem.BUSY");
-		in.putExtra("busy",true);
-		sendBroadcast(in);
+		//in.putExtra("busy",true);
+		//sendBroadcast(in);
 
 		NotificationManager mNM;
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
@@ -73,6 +77,7 @@ public class ServiceRss extends IntentService {
 		RssAPI rss=null;
 
 		for(int j=0;j<feeds.length;j++) {
+
 			past = (long)(System.currentTimeMillis()/1000 - Long.parseLong(preferences.getString("savetime","365"))*24*3600);
 
 			String feed=feeds[j][0];
@@ -86,6 +91,11 @@ public class ServiceRss extends IntentService {
 				//Log.d(TAG,"deleted feed "+feed+" ("+k+" messages)");
 				continue;
 			}
+
+			// affiche un dialogue
+			in.putExtra("msg", ActivityUdeMListFC.feedName.get(feed)+"...");
+			in.putExtra("progress",j*100/(feeds.length));
+			sendBroadcast(in);
 
 			rss=new RssAPI("http://www.nouvelles.umontreal.ca/"+feed+"/rss.html");
 			if( rss==null || rss.erreur!=null ) {
@@ -164,7 +174,7 @@ public class ServiceRss extends IntentService {
 		//// now remove everything that is too old...
 		int k=db.delete(DBHelper.TABLE, DBHelper.C_TIME+" < "+past, null);
 		Log.d(TAG,"removed "+k+" old messages");
-	
+
 		// libere la memoire
 		rss=null;
 		db.close();
@@ -172,8 +182,17 @@ public class ServiceRss extends IntentService {
 
 		// termine en enlevant le "busy" si l'app ecoute ce signal...
 		in=new Intent("com.seboid.udem.BUSY");
-		in.putExtra("busy",false);
+		//in.putExtra("busy",false);
+		in.putExtra("progress",100); // va enlever le dialogue
 		sendBroadcast(in);
+
+		//
+		// Verifions si le broadcastreceiver BUSY est disponible.
+		// Si c'est le cas, on va faire un toast plutot qu'une notification
+		//
+
+		Toast.makeText(getApplicationContext(), "Allo!", Toast.LENGTH_LONG).show();
+
 
 		if( nb==0 ) showNotification(mNM,"Aucun nouveau message.");
 		if( nb>0 ) showNotification(mNM,nb+(nb>1?" nouveaux messages.":" nouveau message."));
@@ -181,20 +200,74 @@ public class ServiceRss extends IntentService {
 	}
 
 
+	/**
+	 * Indicates whether the specified action can be used as an intent. This
+	 * method queries the package manager for installed packages that can
+	 * respond to an intent with the specified action. If no suitable package is
+	 * found, this method returns false.
+	 * 
+	 * ce ne trouve pas les receiver enregistres dynamiquement... seulement ceux des manifestes
+	 *
+	 * @param context The application's environment.
+	 * @param action The Intent action to check for availability.
+	 *
+	 * @return True if an Intent with the specified action can be sent and
+	 * responded to, false otherwise.
+	 */
+//	public static boolean isBroadcastReceiverAvailable(Context context, String action) {
+//		final PackageManager packageManager = context.getPackageManager();
+//		final Intent intent = new Intent(action);
+//		List<ResolveInfo> list =
+//				packageManager.queryBroadcastReceivers(intent, PackageManager.MATCH_DEFAULT_ONLY);
+//				//packageManager.queryIntentActivities(intent,PackageManager.MATCH_DEFAULT_ONLY);
+//		return list.size() > 0;
+//	}
+
+	//
+	// Notification
+	//
+	// voir http://developer.android.com/guide/topics/ui/notifiers/notifications.html
+	//
+
+	//	private void showNotification(NotificationManager mNM,String msg) {
+	//		// Set the icon, scrolling text and timestamp
+	//				
+	//				new Notification(R.drawable.udem, msg,
+	//				System.currentTimeMillis());
+	//
+	//		// The PendingIntent to launch our activity if the user selects this notification
+	//		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+	//				new Intent(this, ActivityDebug.class), 0);
+	//
+	//		// Set the info for the views that show in the notification panel.
+	//		notification.setLatestEventInfo(this,"UdeM Nouvelles",msg, contentIntent);
+	//
+	//		// Send the notification.
+	//		mNM.notify(R.string.app_name, notification);
+	//	}
+
+
 	private void showNotification(NotificationManager mNM,String msg) {
-		// Set the icon, scrolling text and timestamp
-		Notification notification = new Notification(R.drawable.udem, msg,
-				System.currentTimeMillis());
+		// Set the icon, scrolling text and timestamp		
+
+		NotificationCompat.Builder mBuilder =
+				new NotificationCompat.Builder(this);
+		mBuilder.setSmallIcon(R.drawable.ic_launcher);
+		mBuilder.setContentTitle("UdeM | Nouvelles");
+		mBuilder.setContentText(msg);
 
 		// The PendingIntent to launch our activity if the user selects this notification
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				new Intent(this, ActivityDebug.class), 0);
+				new Intent(this, ActivityUdeMNouvelles.class), 0);
 
-		// Set the info for the views that show in the notification panel.
-		notification.setLatestEventInfo(this,"UdeM Nouvelles",msg, contentIntent);
+		mBuilder.setContentIntent(contentIntent);
+		NotificationManager mNotificationManager =
+				(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		// mId allows you to update the notification later on.
 
-		// Send the notification.
-		mNM.notify(R.string.app_name, notification);
+		mNotificationManager.notify(R.string.app_name, mBuilder.build());
+
+
 	}
 
 
