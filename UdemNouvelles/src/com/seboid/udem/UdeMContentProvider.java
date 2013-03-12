@@ -8,6 +8,7 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
@@ -29,13 +30,17 @@ public class UdeMContentProvider extends ContentProvider {
 	public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY
 			+ "/" + BASE_PATH);
 
+	// mime type... pas super utile pour l'instant....
 	public static final String CONTENT_TYPE = ContentResolver.CURSOR_DIR_BASE_TYPE + "/nouvelles";
 	public static final String CONTENT_ITEM_TYPE = ContentResolver.CURSOR_ITEM_BASE_TYPE + "/nouvelle";
 
+	
 	private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 	static {
+		// content://com.seboid.udem.nouvelles/nouvelles   -> toutes les nouvelles
 		sURIMatcher.addURI(AUTHORITY, BASE_PATH, NOUVELLES);
 		// on utilise * parce que # ne supporte que des nombres positifs... :-(
+		// content://com.seboid.udem.nouvelles/nouvelles/1654235   -> une nouvelle en particulier
 		sURIMatcher.addURI(AUTHORITY, BASE_PATH + "/*", NOUVELLE_ID);
 	}
 
@@ -86,7 +91,7 @@ public class UdeMContentProvider extends ContentProvider {
 
 	@Override
 	public Uri insert(Uri uri, ContentValues values) {
-		Log.d("contentprovider","inert "+uri);
+		Log.d("contentprovider","insert "+uri);
 
 		int uriType = sURIMatcher.match(uri);
 		SQLiteDatabase sqlDB = dbh.getWritableDatabase();
@@ -94,13 +99,15 @@ public class UdeMContentProvider extends ContentProvider {
 		long id = 0;
 		switch (uriType) {
 		case NOUVELLES:
-			id = sqlDB.insert(DBHelper.TABLE, null, values);
+			try {
+				id = sqlDB.insertOrThrow(DBHelper.TABLE, null, values);
+			} catch ( SQLException e ) { /* deja une cle dans la bd */ }
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI: " + uri);
 		}
 		getContext().getContentResolver().notifyChange(uri, null);
-		return Uri.parse(BASE_PATH + "/" + id);
+		return 	Uri.parse(BASE_PATH + "/" + values.get(DBHelper.C_ID) );
 	}
 
 

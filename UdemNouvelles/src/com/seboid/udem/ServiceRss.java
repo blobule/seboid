@@ -1,7 +1,6 @@
 package com.seboid.udem;
 
 import java.util.HashMap;
-import java.util.List;
 
 import android.app.IntentService;
 import android.app.NotificationManager;
@@ -10,21 +9,22 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.database.SQLException;
-import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteConstraintException;
+import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+//
+// ce service va chercher les feed rss
+// et fait une mise a jour du content provider
+//
 
 
 public class ServiceRss extends IntentService {
 
 	//public static final String NEW_STATUS_INTENT="com.seboid.udem.newstatus";
-
 
 	static final String TAG="service";
 	static final int DELAY=10*60*1000; // 10 minutes
@@ -66,14 +66,14 @@ public class ServiceRss extends IntentService {
 		NotificationManager mNM;
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 
-		DBHelper dbH=new DBHelper(this); // a quoi sert le this ici? pour du UI?
+//		DBHelper dbH=new DBHelper(this); // a quoi sert le this ici? pour du UI?
 
 		long past=0;
 
 		SharedPreferences preferences=PreferenceManager.getDefaultSharedPreferences(ServiceRss.this);
 		int nb=0;
 
-		SQLiteDatabase db=dbH.getWritableDatabase();
+//		SQLiteDatabase db=dbH.getWritableDatabase();
 		RssAPI rss=null;
 
 		for(int j=0;j<feeds.length;j++) {
@@ -87,7 +87,10 @@ public class ServiceRss extends IntentService {
 			Log.d(TAG,"Loading "+feed+" : "+use);
 			if( !use ) {
 				// remove this feed completely
-				int k=db.delete(DBHelper.TABLE, DBHelper.C_FEED+" = '"+feed+"'", null);
+				Uri u = UdeMContentProvider.CONTENT_URI;
+
+				getContentResolver().delete(u, DBHelper.C_FEED+" = '"+feed+"'" , null);				
+//				int k=db.delete(DBHelper.TABLE, DBHelper.C_FEED+" = '"+feed+"'", null);
 				//Log.d(TAG,"deleted feed "+feed+" ("+k+" messages)");
 				continue;
 			}
@@ -130,12 +133,16 @@ public class ServiceRss extends IntentService {
 				val.put(DBHelper.C_IMAGE, "");
 				val.put(DBHelper.C_LU, false);
 
-
 				try {
-					db.insertOrThrow(DBHelper.TABLE, null, val);
-					nb++;
-				} catch ( SQLException e ) {
+					getContentResolver().insert(UdeMContentProvider.CONTENT_URI, val);			
+				} catch( SQLiteConstraintException e ) {
+					Log.d(TAG,"already inserted");
 				}
+//				try {
+//					db.insertOrThrow(DBHelper.TABLE, null, val);
+//					nb++;
+//				} catch ( SQLException e ) {
+//				}
 			}
 
 			// extra feed pour obtenir la description longue et l'image
@@ -162,23 +169,26 @@ public class ServiceRss extends IntentService {
 				val.put(DBHelper.C_LONGDESC, (String)hm.get("description"));
 				val.put(DBHelper.C_IMAGE, (String)hm.get("image"));
 
-				try {
-					db.update(DBHelper.TABLE, val, DBHelper.C_ID+"="+id , null);
-				} catch ( SQLException e ) {
-					Log.d("service","probleme de update dans la DB :-(");
-				}
+				Uri itemUri = Uri.parse(UdeMContentProvider.CONTENT_URI + "/" + id);
+				getContentResolver().update(itemUri, val, null, null);
+//				try {
+//					db.update(DBHelper.TABLE, val, DBHelper.C_ID+"="+id , null);
+//				} catch ( SQLException e ) {
+//					Log.d("service","probleme de update dans la DB :-(");
+//				}
 			}
 
 		}
 
 		//// now remove everything that is too old...
-		int k=db.delete(DBHelper.TABLE, DBHelper.C_TIME+" < "+past, null);
+		int k=getContentResolver().delete(UdeMContentProvider.CONTENT_URI, DBHelper.C_TIME+" < "+past, null);
+		//int k=db.delete(DBHelper.TABLE, DBHelper.C_TIME+" < "+past, null);
 		Log.d(TAG,"removed "+k+" old messages");
 
 		// libere la memoire
 		rss=null;
-		db.close();
-		db=null;
+//		db.close();
+//		db=null;
 
 		// termine en enlevant le "busy" si l'app ecoute ce signal...
 		in=new Intent("com.seboid.udem.BUSY");
