@@ -101,7 +101,9 @@ public class UdeMContentProvider extends ContentProvider {
 		case NOUVELLES:
 			try {
 				id = sqlDB.insertOrThrow(DBHelper.TABLE, null, values);
-			} catch ( SQLException e ) { /* deja une cle dans la bd */ }
+			} catch ( SQLException e ) {
+				/* deja une cle dans la bd... insert failed */
+				return null; }
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI: " + uri);

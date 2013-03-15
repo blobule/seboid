@@ -8,6 +8,12 @@
         android:title="@string/mettre_a_jour">
     </item>
     <item
+        android:id="@+id/menusource"
+        android:icon="@android:drawable/ic_menu_agenda"
+        android:showAsAction="ifRoom"
+        android:title="@string/sources">
+    </item>
+    <item
         android:id="@+id/menuprefs"
         android:icon="@android:drawable/ic_menu_preferences"
         android:showAsAction="ifRoom"

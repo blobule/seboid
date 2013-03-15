@@ -12,14 +12,21 @@
         android:background="#ff666666"
         android:onClick="actionFeed" >
 
+        <CheckBox
+            android:id="@+id/rowfeedcheck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:checked="true"
+            android:onClick="actionCheck" />
+
         <TextView
             android:id="@+id/rowfeed"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Small Text"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:textSize="16sp" />
+            android:textAppearance="?android:attr/textAppearanceLarge" />
 
         <TextView
             android:id="@+id/rowfeedcount"
@@ -27,8 +34,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="0"
             android:text="5"
-            android:textColor="#00ffff"
-            android:textSize="16dp" />
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:textColor="#008080" />
 
     </LinearLayout>
 
@@ -46,8 +53,8 @@
             android:layout_gravity="right"
             android:layout_weight="1"
             android:text="cinema"
-            android:textColor="#ffff00"
-            android:textSize="14sp" />
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="#909000" />
 
         <TextView
             android:id="@+id/rowcatcount"
@@ -55,8 +62,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="0"
             android:text="2"
-            android:textColor="#00ffff"
-            android:textSize="14sp" />
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="#008080" />
 
     </LinearLayout>
 

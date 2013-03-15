@@ -134,7 +134,8 @@ public class ServiceRss extends IntentService {
 				val.put(DBHelper.C_LU, false);
 
 				try {
-					getContentResolver().insert(UdeMContentProvider.CONTENT_URI, val);			
+					Uri u=getContentResolver().insert(UdeMContentProvider.CONTENT_URI, val);
+					if( u!=null ) nb++;
 				} catch( SQLiteConstraintException e ) {
 					Log.d(TAG,"already inserted");
 				}
@@ -151,6 +152,11 @@ public class ServiceRss extends IntentService {
 			rss=new RssAPI("http://www.nouvelles.umontreal.ca/index.php?option=com_ijoomla_rss&act=xml&sec="+feedExtra+"&feedtype=RSS2.0");
 			if( rss==null || rss.erreur!=null ) {
 				Log.d(TAG,"rss null for feed "+feed+". skipping");
+				continue;
+			}
+			
+			if( rss.data==null ) {
+				Log.d(TAG,"rss.data null for feed "+feed+". skipping");
 				continue;
 			}
 
@@ -190,9 +196,14 @@ public class ServiceRss extends IntentService {
 //		db.close();
 //		db=null;
 
+		String info;
+		if( nb==0 ) info="Aucun nouveau message.";
+		else info=nb+(nb>1?" nouveaux messages.":" nouveau message.");
+		
 		// termine en enlevant le "busy" si l'app ecoute ce signal...
 		in=new Intent("com.seboid.udem.BUSY");
 		//in.putExtra("busy",false);
+		in.putExtra("msg",info); // petit message final a afficher
 		in.putExtra("progress",100); // va enlever le dialogue
 		sendBroadcast(in);
 
@@ -200,13 +211,7 @@ public class ServiceRss extends IntentService {
 		// Verifions si le broadcastreceiver BUSY est disponible.
 		// Si c'est le cas, on va faire un toast plutot qu'une notification
 		//
-
-		Toast.makeText(getApplicationContext(), "Allo!", Toast.LENGTH_LONG).show();
-
-
-		if( nb==0 ) showNotification(mNM,"Aucun nouveau message.");
-		if( nb>0 ) showNotification(mNM,nb+(nb>1?" nouveaux messages.":" nouveau message."));
-
+		showNotification(mNM,info);
 	}
 
 

@@ -16,10 +16,14 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.text.Html;
@@ -49,14 +53,14 @@ import android.widget.TextView;
 // Cette activite retourne le id de la derniere page visitee
 //
 
-public class ActivityUdeMDetail extends Activity  {
+public class ActivityUdeMDetail extends Activity {
 
 	private ViewPager awesomePager;
 	private AwesomePagerAdapter awesomeAdapter;    
 
 
-//	DBHelper dbH;
-//	SQLiteDatabase db;
+	//	DBHelper dbH;
+	//	SQLiteDatabase db;
 	Cursor cursor;
 
 	// pour gerer la lecture (ce qui est lu ou pas lu)
@@ -74,6 +78,8 @@ public class ActivityUdeMDetail extends Activity  {
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		Log.d("detail","create!");
+
 		super.onCreate(savedInstanceState);
 		// pour le progress bar rotatif
 		getWindow().requestFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
@@ -87,14 +93,13 @@ public class ActivityUdeMDetail extends Activity  {
 		Intent sender=getIntent();
 		id=sender.getLongExtra("id",0);
 		Log.d("detail","looking for id="+id);
-		
 
 		String t=sender.getStringExtra("title");
 		if( t!=null ) {
-			this.setTitle("UdeM | "+t);
+			this.setTitle(t);
 			Log.d("detail","title is "+t);
 		}
-		this.setTitleColor(0xff0047b6);
+		//this.setTitleColor(0xff0047b6);
 
 
 		where=sender.getStringExtra("where");
@@ -126,29 +131,28 @@ public class ActivityUdeMDetail extends Activity  {
 		finish();
 	}
 
+	public static final String[] projection=new String[] {
+		DBHelper.C_ID,
+		DBHelper.C_TITLE,
+		DBHelper.C_LINK,
+		DBHelper.C_DESC,
+		DBHelper.C_TIME,
+		DBHelper.C_LONGDESC,
+		DBHelper.C_IMAGE,
+		DBHelper.C_LU,
+		DBHelper.C_CATEGORY
+	};
+
 	@Override
 	protected void onResume() {
 		super.onResume();
-		Log.d("rss","resume!");
+		Log.d("detail","resume!");
 
-		//db=dbH.getReadableDatabase();
-
-		
-		String[] projection=new String[] {
-				DBHelper.C_ID,
-				DBHelper.C_TITLE,
-				DBHelper.C_LINK,
-				DBHelper.C_DESC,
-				DBHelper.C_TIME,
-				DBHelper.C_LONGDESC,
-				DBHelper.C_IMAGE,
-				DBHelper.C_LU
-		};
 		// get data from database
-	    cursor = getContentResolver().query(UdeMContentProvider.CONTENT_URI, projection, where, null,DBHelper.C_TIME+" DESC");
+		cursor = getContentResolver().query(UdeMContentProvider.CONTENT_URI, projection, where, null,DBHelper.C_TIME+" DESC");
 
-//		cursor=db.query(DBHelper.TABLE,projection,where, null, null, null, DBHelper.C_TIME+" DESC");
-//		startManagingCursor(cursor);
+		//		cursor=db.query(DBHelper.TABLE,projection,where, null, null, null, DBHelper.C_TIME+" DESC");
+		//		startManagingCursor(cursor);
 
 		// on va avoir besoin des ID de toutes les rangeees... pour gerer le LU
 		lecture = new Lecture[cursor.getCount()];
@@ -159,9 +163,11 @@ public class ActivityUdeMDetail extends Activity  {
 		}
 
 		// on trouve le bon point de depart dans la liste...
-		cursor.moveToFirst();
 		if( id!=0 ) {
+			cursor.moveToFirst();
 			while( !cursor.isAfterLast() && cursor.getLong(0)!=id ) cursor.moveToNext();
+			// a partir de maintenant, on ne s'occupe plus du id
+			id=0;
 		}
 
 		//Toast.makeText(this,"found id="+id+" at pos="+cursor.getPosition(), Toast.LENGTH_LONG).show();
@@ -174,9 +180,45 @@ public class ActivityUdeMDetail extends Activity  {
 	}
 
 	@Override
+	protected void onPause() {
+		super.onPause();
+		// set id to the current id we are looking at, so we can go back there later...
+		id=cursor.getLong(0);
+		Log.d("detail","pause! saving id="+id);
+	}
+
+	@Override
+	protected void onStart() {
+		Log.d("detail","start!");
+		super.onStop();
+	}
+
+	@Override
+	protected void onStop() {
+		Log.d("detail","stop!");
+		super.onStop();
+	}
+
+
+	@Override
 	protected void onDestroy() {
+		Log.d("detail","destroy!");
 		super.onDestroy();
 	}
+
+//	@Override
+//	public void onSaveInstanceState(Bundle savedInstanceState) {
+//		super.onSaveInstanceState(savedInstanceState);
+//		// Save UI state changes to the savedInstanceState.
+//		// This bundle will be passed to onCreate if the process is
+//		// killed and restarted.
+//		savedInstanceState.putBoolean("MyBoolean", true);
+//		savedInstanceState.putDouble("myDouble", 1.9);
+//		savedInstanceState.putInt("MyInt", 1);
+//		savedInstanceState.putString("MyString", "Welcome back to Android");
+//		Log.d("detail","saved state!");
+//	}
+//
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -276,6 +318,7 @@ public class ActivityUdeMDetail extends Activity  {
 
 			//Log.d("detail", "inflate "+position+" ok");
 
+			TextView cat=(TextView)detail.findViewById(R.id.detail_cat);
 			TextView titre=(TextView)detail.findViewById(R.id.detail_titre);
 			ImageView image=(ImageView)detail.findViewById(R.id.detail_image);
 			ProgressBar loading=(ProgressBar)detail.findViewById(R.id.detail_loading);
@@ -324,6 +367,7 @@ public class ActivityUdeMDetail extends Activity  {
 			// on suppose que l'etat de lecture ne changera pas de l'exterieur
 			//
 
+			cat.setText(cursor.getString(8));
 			titre.setText(cursor.getString(1));
 			//image.setText(cursor.getString(6));
 			//contenu.setText(cursor.getString(5));
@@ -390,15 +434,15 @@ public class ActivityUdeMDetail extends Activity  {
 				ContentValues val = new ContentValues();
 				val.clear();
 				val.put(DBHelper.C_LU, true);
-				
+
 				Uri itemUri = Uri.parse(UdeMContentProvider.CONTENT_URI + "/" + lecture[pos].id);
 				getContentResolver().update(itemUri, val, DBHelper.C_ID+"="+lecture[pos].id , null);
-				
-//				try {
-//					db.update(DBHelper.TABLE, val, DBHelper.C_ID+"="+lecture[pos].id , null);
-//				} catch ( SQLException e ) {
-//					Log.d("detail","probleme de update dans la DB :-(");
-//				}
+
+				//				try {
+				//					db.update(DBHelper.TABLE, val, DBHelper.C_ID+"="+lecture[pos].id , null);
+				//				} catch ( SQLException e ) {
+				//					Log.d("detail","probleme de update dans la DB :-(");
+				//				}
 			}
 		}
 
@@ -502,8 +546,9 @@ public class ActivityUdeMDetail extends Activity  {
 		Lecture(long id,boolean lu) { this.id=id;this.lu=lu; }
 	}
 
-//    i.putExtra(MyTodoContentProvider.CONTENT_ITEM_TYPE, todoUri);
+	//    i.putExtra(MyTodoContentProvider.CONTENT_ITEM_TYPE, todoUri);
 
-	
-	
+
+
+
 }

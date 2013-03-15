@@ -18,11 +18,6 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity android:name=".ActivityDebug" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
         <activity
             android:name=".ActivityUdeMNouvelles"
@@ -46,7 +41,11 @@
         </activity>
         <activity
             android:name=".ActivityUdeMListFC"
-            android:label="UdeM|Sources et Cat" >
+            android:label="Sources et catégories" >
+              <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
         </activity>
         <activity
             android:name=".ActivityUdeMListFeedCat"
@@ -55,6 +54,10 @@
         <activity
             android:name=".ActivityPreferences"
             android:label="@string/app_myPreferencesName" >
+        </activity>
+        <activity
+            android:name=".BonjourActivity"
+            android:label="@string/app_bienvenueName" >           
         </activity>
 
         <service android:name=".ServiceRss" >

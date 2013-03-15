@@ -1,5 +1,6 @@
 package com.seboid.udem;
 
+import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -24,6 +25,7 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 //
@@ -45,6 +47,9 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 	// busy affichage
 	IntentFilter busyFilter;
 	BusyReceiver busyR;
+	
+	// pour activer/desactiver un bout de menu
+	MenuItem menuRefresh=null;
 
 
 	//
@@ -61,7 +66,8 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 	// directment des params de demarrage...
 	String type; // on peut mettre ici "feed" ou "category"
 	String selection; // pour choisir ce qui sera afficher. sql: type=selection. Donc feed ou category
-	String nice; // titre a afficher (peut etre null)
+	String title; // titre a afficher (peut etre null)
+
 
 	// Mapping pour l'affiche. from contient les id des elements d'une rangees dans le mapping
 	// to contient les id des elements d'interface
@@ -92,11 +98,11 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 		// le titre en gros
 		//		TextView titreView=(TextView)findViewById(R.id.rsstitre);
 
-		// attend des parametres au demarrage: feed et nice
+		// attend des parametres au demarrage: feed
 		Intent sender=getIntent();
 		type = sender.getStringExtra("type");
 		selection = sender.getStringExtra("selection");
-		//nice = sender.getStringExtra("nice");
+		title = sender.getStringExtra("title");
 
 		if( type==null ) selection=null;
 		if( selection==null ) type=null;
@@ -105,8 +111,7 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 
 		//		titreView.setText(nice);
 
-		if( type!=null ) this.setTitle("UdeM | "+selection);
-
+		this.setTitle(title!=null?title:"UdeM");
 
 		lv=(ListView)findViewById(R.id.list);
 		lv.setOnItemClickListener(new OnItemClickListener() {
@@ -119,7 +124,7 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 
 				if( type!=null ) {
 					in.putExtra("where",type+" = "+ DatabaseUtils.sqlEscapeString(selection));
-					in.putExtra("title",selection);
+					in.putExtra("title",title); // ca contient le cas d'un feed et d'une categorie
 					//in.putExtra("pos", position);
 					//cursor=db.query(DBHelper.TABLE, select ,(type!=null?(type+" = '"+selection+"'"):null), null, null, null, DBHelper.C_TIME+" DESC");	
 				}
@@ -155,7 +160,8 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 		// LoaderManager will manage the Loader across the Activity/Fragment
 		// lifecycle, will receive any new loads once they have completed,
 		// and will report this new data back to the "mCallbacks" object.
-		getSupportLoaderManager().initLoader(LOADER_ID, null,  (android.support.v4.app.LoaderManager.LoaderCallbacks<Cursor>) this);
+		getSupportLoaderManager().initLoader(LOADER_ID, null,  
+				(android.support.v4.app.LoaderManager.LoaderCallbacks<Cursor>) this);
 
 
 		
@@ -237,6 +243,9 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 	public boolean onCreateOptionsMenu(Menu menu) {
 		MenuInflater inflater = getMenuInflater();
 		inflater.inflate(R.menu.principal, menu);
+		// trouve l'item mise-a-jour pour pouvoir le desactiver au besoin...
+		// ok pour android>=3.0, mais pas appelle tant qu' on ne presse pas menu dans android 2.33
+		menuRefresh=menu.findItem(R.id.menurefresh);
 		return true;
 	}
 
@@ -246,6 +255,9 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 		switch(item.getItemId()) {
 		case R.id.menurefresh:			
 			startService(new Intent(this,ServiceRss.class));
+			break;
+		case R.id.menusource:
+			startActivity(new Intent(this, ActivityUdeMListFC.class));
 			break;
 		case R.id.menuprefs:
 			// Launch Preference activity
@@ -262,43 +274,40 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 	}
 
 	//
-	// controle de l'affichage des champs d'une ligne
-	//
-
-
-	//	static final ViewBinder VIEW_BINDER = new ViewBinder() {
-	//		public boolean setViewValue(View view, Cursor c, int index) {
-	//			switch( view.getId() ) {
-	//			case R.id.rowcatcount:
-	//				long timestamp=c.getLong(index)*1000; // sec -> millisec
-	//				//Log.d("time","time "+timestamp);
-	//				CharSequence relTime = DateUtils.getRelativeTimeSpanString(timestamp);
-	//				((TextView)view).setText(relTime);
-	//				break;
-	//			case R.id.rowfav:
-	//					view.setVisibility( c.getPosition()>5?View.INVISIBLE:View.VISIBLE);
-	//				break;
-	//			default: return false; // auto-render
-	//			}
-	//			return true;
-	//		}
-	//	};
-
-
-	//
 	// un broadcast receiver pour affiche le status "busy"...
 	// on veut afficher busy quand le service travaille...
 	//
 	class BusyReceiver extends BroadcastReceiver {
+		ProgressDialog mDialog=null;
+
 		@Override
 		public void onReceive(Context ctx, Intent in) {
-			boolean busy = in.getExtras().getBoolean("busy");
-			setProgressBarIndeterminateVisibility(busy);
-			//if( !busy ) cursor.requery(); // on vient de finir une mise a jour...
-			/// comment dire qu'on doit reloader les data??????
+			//boolean busy = in.getExtras().getBoolean("busy");
+			//setProgressBarIndeterminateVisibility(busy);
+
+			String msg=in.getExtras().getString("msg");
+			int progress=in.getExtras().getInt("progress",-1);
+
+			if( progress<100 ) {
+				setProgressBarIndeterminateVisibility(true);
+				// pour android >3.0
+				if( menuRefresh!=null ) {
+					menuRefresh.setVisible(false);
+					menuRefresh.setEnabled(false);
+				}
+			}else{
+				setProgressBarIndeterminateVisibility(false);
+				if( menuRefresh!=null ) {
+					menuRefresh.setEnabled(true);
+					menuRefresh.setVisible(true);
+				}
+				if( msg!=null ) Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_LONG).show();
+			}
 		}		
 	}
 
+	
+	
 	//
 	// note adapter personalise avec un bindview special
 	//

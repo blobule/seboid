@@ -11,16 +11,17 @@
     <string name="app_udemrssCatName">UdeM : Categories</string>
     <string name="app_udemrssFeedCatName">UdeM : Sources + Categories</string>
     <string name="app_myPreferencesName">Préférences</string>
+    <string name="app_bienvenueName">Bienvenu</string>
 
-    <!--  dans le menu -->
+    <!-- dans le menu -->
     <string name="preferences">Préférences</string>
     <string name="mettre_a_jour">Mettre à jour</string>
+     <string name="sources">Sources</string>
     <string name="partager">Partager</string>
     <string name="favori">Conserver</string>
-    
-    <!--  pour le share -->
+
+    <!-- pour le share -->
     <string name="sharewith">Partager avec...</string>
-    
 
     <string-array name="PreferenceFruitsItems">
         <item>Banane</item>
