@@ -1,5 +1,6 @@
 package com.seboid.udem;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -12,18 +13,20 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
-import android.support.v4.content.Loader;
+import android.provider.Browser;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.text.Html;
@@ -112,7 +115,7 @@ public class ActivityUdeMDetail extends Activity {
 
 		//titreView.setText(nice);
 
-
+		instructions();
 
 		//		web=(WebView)findViewById(R.id.web);
 		//		web.setScrollContainer(true);
@@ -206,19 +209,19 @@ public class ActivityUdeMDetail extends Activity {
 		super.onDestroy();
 	}
 
-//	@Override
-//	public void onSaveInstanceState(Bundle savedInstanceState) {
-//		super.onSaveInstanceState(savedInstanceState);
-//		// Save UI state changes to the savedInstanceState.
-//		// This bundle will be passed to onCreate if the process is
-//		// killed and restarted.
-//		savedInstanceState.putBoolean("MyBoolean", true);
-//		savedInstanceState.putDouble("myDouble", 1.9);
-//		savedInstanceState.putInt("MyInt", 1);
-//		savedInstanceState.putString("MyString", "Welcome back to Android");
-//		Log.d("detail","saved state!");
-//	}
-//
+	//	@Override
+	//	public void onSaveInstanceState(Bundle savedInstanceState) {
+	//		super.onSaveInstanceState(savedInstanceState);
+	//		// Save UI state changes to the savedInstanceState.
+	//		// This bundle will be passed to onCreate if the process is
+	//		// killed and restarted.
+	//		savedInstanceState.putBoolean("MyBoolean", true);
+	//		savedInstanceState.putDouble("myDouble", 1.9);
+	//		savedInstanceState.putInt("MyInt", 1);
+	//		savedInstanceState.putString("MyString", "Welcome back to Android");
+	//		Log.d("detail","saved state!");
+	//	}
+	//
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -232,6 +235,13 @@ public class ActivityUdeMDetail extends Activity {
 		switch(item.getItemId()) {
 		case R.id.menushare:
 			shareIt();
+			break;
+		case R.id.menusave:
+		{
+			int current=awesomePager.getCurrentItem();
+			cursor.moveToPosition(current);
+			addBookmark(cursor.getString(1), "http://www.umontreal.ca/");
+		}
 			break;
 		}
 		return true;
@@ -547,6 +557,52 @@ public class ActivityUdeMDetail extends Activity {
 	}
 
 	//    i.putExtra(MyTodoContentProvider.CONTENT_ITEM_TYPE, todoUri);
+
+
+	public void instructions() {
+		AlertDialog.Builder adb = new AlertDialog.Builder(this);
+		adb.setTitle("Set Title here");
+		adb.setMessage("Set the Text Message here");
+		adb.setPositiveButton("Ok", new DialogInterface.OnClickListener()
+		{
+			public void onClick(DialogInterface dialog, int id)
+			{
+				// Action for 'Ok' Button
+			}
+		});
+		adb.setNegativeButton("Cancel", new DialogInterface.OnClickListener()
+		{
+			public void onClick(DialogInterface dialog, int id)
+			{
+				// Action for 'Cancel' Button
+				dialog.cancel();
+			}
+		});
+		adb.setIcon(R.drawable.ic_launcher);
+		adb.show();
+	}
+
+	public void addBookmark(String title, String url) {
+		
+		// va chercher l'icone
+		Resources res = getResources();
+		Drawable drawable = res.getDrawable(R.drawable.ic_launcher);
+		Bitmap bitmap = ((BitmapDrawable)drawable).getBitmap();
+		ByteArrayOutputStream stream = new ByteArrayOutputStream();
+//		bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+		bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+
+		byte[] bitMapData = stream.toByteArray();		
+		
+		final ContentValues bookmarkValues = new ContentValues();
+		bookmarkValues.put(Browser.BookmarkColumns.TITLE, title);
+		bookmarkValues.put(Browser.BookmarkColumns.URL, url);
+		bookmarkValues.put(Browser.BookmarkColumns.BOOKMARK, 1);
+		bookmarkValues.put(Browser.BookmarkColumns.FAVICON, bitMapData);
+
+
+		final Uri newBookmark = getContentResolver().insert(Browser.BOOKMARKS_URI, bookmarkValues);
+	}
 
 
 

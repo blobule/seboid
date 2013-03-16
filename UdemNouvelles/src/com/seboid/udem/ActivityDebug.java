@@ -114,10 +114,10 @@ public class ActivityDebug extends Activity implements OnClickListener {
 			startActivity(new Intent(this, ActivityUdeMNouvelles.class));
 			break;
 		case R.id.rss:
-			startActivity(new Intent(this, ActivityUdeMListFeed.class));
+			//startActivity(new Intent(this, ActivityUdeMListFeed.class));
 			break;
 		case R.id.rsscat:
-			startActivity(new Intent(this, ActivityUdeMListCat.class));
+			//startActivity(new Intent(this, ActivityUdeMListCat.class));
 			break;
 		case R.id.rssfeedcat:
 			startActivity(new Intent(this, ActivityUdeMListFC.class));
