@@ -7,10 +7,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SimpleCursorAdapter;
@@ -111,7 +111,7 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 
 		//		titreView.setText(nice);
 
-		this.setTitle(title!=null?title:"UdeM");
+		this.setTitle(title!=null?title:"Nouvelles");
 
 		lv=(ListView)findViewById(R.id.list);
 		lv.setOnItemClickListener(new OnItemClickListener() {
@@ -145,7 +145,7 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 		// that we have passed the "0" flag as the last argument. This
 		// prevents the adapter from registering a ContentObserver for the
 		// Cursor (the CursorLoader will do this for us!).
-		adapter = new MySimpleCursorAdapter(this, R.layout.rowfav /* .row */, from, to);		
+		adapter = new MySimpleCursorAdapter(this, R.layout.rowfav, from, to);		
 		lv.setAdapter(adapter);
 
 		// The Activity (which implements the LoaderCallbacks<Cursor>
@@ -162,7 +162,6 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 		// and will report this new data back to the "mCallbacks" object.
 		getSupportLoaderManager().initLoader(LOADER_ID, null,  
 				(android.support.v4.app.LoaderManager.LoaderCallbacks<Cursor>) this);
-
 
 		
 		// le busy receiver
@@ -256,9 +255,9 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 		case R.id.menurefresh:			
 			startService(new Intent(this,ServiceRss.class));
 			break;
-		case R.id.menusource:
-			startActivity(new Intent(this, ActivityUdeMListFC.class));
-			break;
+//		case R.id.menusource:
+//			startActivity(new Intent(this, ActivityUdeMListFC.class));
+//			break;
 		case R.id.menuprefs:
 			// Launch Preference activity
 			startActivity(new Intent(this, ActivityPreferences.class));
@@ -353,7 +352,6 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 	// loader manager. Ce sont les callbacks....
 	//
 
-
 	@Override
 	public Loader<Cursor> onCreateLoader(int id, Bundle args) {
 		// Create a new CursorLoader with the following query parameters.		
@@ -390,5 +388,7 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 		adapter.swapCursor(null);
 	}
 
+
+	
 }
 

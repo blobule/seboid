@@ -35,7 +35,7 @@
             android:layout_weight="0"
             android:text="5"
             android:textAppearance="?android:attr/textAppearanceLarge"
-            android:textColor="#008080" />
+            android:textColor="#33b5e9" />
 
     </LinearLayout>
 
@@ -54,7 +54,7 @@
             android:layout_weight="1"
             android:text="cinema"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:textColor="#909000" />
+            android:textColor="#ff9000" />
 
         <TextView
             android:id="@+id/rowcatcount"
@@ -63,7 +63,7 @@
             android:layout_weight="0"
             android:text="2"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:textColor="#008080" />
+            android:textColor="#33b5e9" />
 
     </LinearLayout>
 

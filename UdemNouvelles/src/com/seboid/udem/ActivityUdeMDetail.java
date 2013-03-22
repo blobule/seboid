@@ -115,7 +115,7 @@ public class ActivityUdeMDetail extends Activity {
 
 		//titreView.setText(nice);
 
-		instructions();
+		//instructions();
 
 		//		web=(WebView)findViewById(R.id.web);
 		//		web.setScrollContainer(true);
@@ -236,13 +236,13 @@ public class ActivityUdeMDetail extends Activity {
 		case R.id.menushare:
 			shareIt();
 			break;
-		case R.id.menusave:
-		{
-			int current=awesomePager.getCurrentItem();
-			cursor.moveToPosition(current);
-			addBookmark(cursor.getString(1), "http://www.umontreal.ca/");
-		}
-			break;
+//		case R.id.menusave:
+//		{
+//			int current=awesomePager.getCurrentItem();
+//			cursor.moveToPosition(current);
+//			addBookmark(cursor.getString(1), "http://www.umontreal.ca/");
+//		}
+//			break;
 		}
 		return true;
 	}
@@ -252,8 +252,9 @@ public class ActivityUdeMDetail extends Activity {
 		cursor.moveToPosition(current);
 		final String title=cursor.getString(1);
 		final String body=
-				"<style type=\"text/css\">body { color:#000000; background-color:#ffffff } a { color:#3030ff; } h2 { color:#000000; } </style><body>"
-						+cursor.getString(5)+"</body>";
+//				"<style type=\"text/css\">body { color:#000000; background-color:#ffffff } a { color:#3030ff; } h2 { color:#000000; } </style><body>"
+//						+cursor.getString(5)+"</body>";
+				"<body>"+cursor.getString(5)+"</body>";
 
 		Intent intent = new Intent(Intent.ACTION_SEND);
 
@@ -388,7 +389,18 @@ public class ActivityUdeMDetail extends Activity {
 			//			web.loadDataWithBaseURL(null,"<style type=\"text/css\">body { color:#ffffff; background-color:#000000 } a { color:#8080ff; } h2 { color:#ffffff; } </style><body>"
 			//					+cursor.getString(5)+"</body>", "text/html","utf-8",null);
 			// si dark on light
-			web.loadDataWithBaseURL(null,"<style type=\"text/css\">body { color:#000000; background-color:#ffffff } a { color:#3030ff; } h2 { color:#000000; } </style><body>"
+//			web.loadDataWithBaseURL(null,"<style type=\"text/css\">body { color:#000000; background-color:#ffffff } a { color:#3030ff; } h2 { color:#000000; } </style><body>"
+//					+cursor.getString(5)+"</body>", "text/html","utf-8",null);
+
+			web.loadDataWithBaseURL(null,"<style type=\"text/css\">body { color:"
+					+getResources().getString(R.string.webTextColor)
+					+"; background-color:"
+					+getResources().getString(R.string.webBackground)
+					+" } a { color:"
+					+getResources().getString(R.string.webLinkColor)
+					+"; } h2 { color:"
+					+getResources().getString(R.string.webTextColor)
+					+"; } </style><body>"
 					+cursor.getString(5)+"</body>", "text/html","utf-8",null);
 
 

@@ -3,6 +3,7 @@
     android:key="prefs"
     android:title="@string/app_myPreferencesName" >
 
+    <!-- 
     <PreferenceCategory
         android:key="sources"
         android:layout="@layout/preferences_category"
@@ -32,6 +33,7 @@
             android:key="revue-de-presse"
             android:title="Revue de presse" />
     </PreferenceCategory>
+     -->
     <PreferenceCategory
         android:key="miseajour"
         android:layout="@layout/preferences_category"

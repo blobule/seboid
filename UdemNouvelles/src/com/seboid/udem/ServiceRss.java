@@ -2,6 +2,7 @@ package com.seboid.udem;
 
 import java.util.HashMap;
 
+import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -10,11 +11,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteConstraintException;
+import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
+import android.text.format.DateUtils;
+import android.text.format.Time;
 import android.util.Log;
-import android.widget.Toast;
 
 //
 // ce service va chercher les feed rss
@@ -63,6 +66,8 @@ public class ServiceRss extends IntentService {
 		//in.putExtra("busy",true);
 		//sendBroadcast(in);
 
+		boolean net=networkOK();
+		
 		NotificationManager mNM;
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 
@@ -76,6 +81,9 @@ public class ServiceRss extends IntentService {
 //		SQLiteDatabase db=dbH.getWritableDatabase();
 		RssAPI rss=null;
 
+		
+		
+		
 		for(int j=0;j<feeds.length;j++) {
 
 			past = (long)(System.currentTimeMillis()/1000 - Long.parseLong(preferences.getString("savetime","365"))*24*3600);
@@ -95,6 +103,9 @@ public class ServiceRss extends IntentService {
 				continue;
 			}
 
+			// si on a pas acces au reseau...
+			if( !net ) continue;
+			
 			// affiche un dialogue
 			in.putExtra("msg", ActivityUdeMListFC.feedName.get(feed)+"...");
 			in.putExtra("progress",j*100/(feeds.length));
@@ -212,6 +223,8 @@ public class ServiceRss extends IntentService {
 		// Si c'est le cas, on va faire un toast plutot qu'une notification
 		//
 		showNotification(mNM,info);
+		
+		//scheduleNextUpdate();
 	}
 
 
@@ -285,8 +298,33 @@ public class ServiceRss extends IntentService {
 
 	}
 
+	
+//	  private void scheduleNextUpdate()
+//	  {
+//	    Intent intent = new Intent(this, this.getClass());
+//	    PendingIntent pendingIntent =
+//	        PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+//
+//	    // The update frequency should often be user configurable.  This is not.
+//
+//	    long currentTimeMillis = System.currentTimeMillis();
+//	    long nextUpdateTimeMillis = currentTimeMillis + 20 * DateUtils.MINUTE_IN_MILLIS;
+//
+//	    AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+//	    alarmManager.set(AlarmManager.RTC, nextUpdateTimeMillis, pendingIntent);
+////	    setInexactRepeating(int type, long triggerAtMillis, long intervalMillis, PendingIntent operation)
+//	  }
 
+	private boolean networkOK() {		  
+		ConnectivityManager conMgr =  (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
 
+		boolean mobile=conMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isConnected();
+		boolean wifi=conMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnected();
+
+		return ( wifi || mobile );
+	}
+	
+	
 }
 
 

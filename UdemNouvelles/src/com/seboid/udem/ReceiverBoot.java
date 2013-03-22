@@ -11,6 +11,6 @@ public class ReceiverBoot extends BroadcastReceiver {
 	public void onReceive(Context arg0, Intent arg1) {
 		Log.d("rss","BOOT!");
 	}
-	
+
 
 }
