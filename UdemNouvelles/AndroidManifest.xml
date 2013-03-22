@@ -11,7 +11,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="com.android.browser.permission.WRITE_HISTORY_BOOKMARKS"/>
+    <!--  <uses-permission android:name="com.android.browser.permission.WRITE_HISTORY_BOOKMARKS"/> -->
 
     <application
         android:allowBackup="true"
@@ -43,7 +43,7 @@
         <activity
             android:name=".ActivityUdeMListFC"
             android:label="Sources et catégories" >
-              <intent-filter android:label="UdeM">
+              <intent-filter android:label="Nouvelles">
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>

@@ -44,6 +44,7 @@ LoaderManager.LoaderCallbacks<Cursor> {
 	private static final int LOADER_ID = 1;
 
 	// on garde une trace pour pouvoir invalider le tout avec onContentChanged()
+	// PEUT ETRE NULL!!! (comme lorsqu'on change l'orientation de l'ecran...)
 	myASyncLoader asl;
 
 	// pour activer/desactiver un bout de menu
@@ -288,7 +289,10 @@ LoaderManager.LoaderCallbacks<Cursor> {
 
 			// ... comment
 			// pas sur que c'est genial... mais bon... on devrait passer cette info par le callback du loader onfinishedload
-			int nbItem=ActivityUdeMListFC.this.asl.feedCount.get(feed);
+			int nbItem;
+			if( ActivityUdeMListFC.this.asl!=null ) nbItem=ActivityUdeMListFC.this.asl.feedCount.get(feed);
+			else nbItem=0;
+			
 			cb.setChecked(use);
 			vf.setText(ActivityUdeMListFC.this.feedName.get(feed)/*+"<"+cursor.getPosition()+">"*/);
 			vfc.setText(""+nbItem);
@@ -410,7 +414,7 @@ LoaderManager.LoaderCallbacks<Cursor> {
 		adapter.swapCursor(data);
 		// le total devrait etre passe dans data, mais on va aller le chercher directement
 		// ajuste l'affichage du total
-		nouvellesTotal.setText(Integer.toString(this.asl.total)); // total
+		if( nouvellesTotal!=null && this.asl!=null ) nouvellesTotal.setText(Integer.toString(this.asl.total)); // total
 
 		// check isResumed() ...
 	}
