@@ -37,7 +37,7 @@ import android.widget.Toast;
 // list feed et categories ensembles...
 
 public class ActivityUdeMListFC extends FragmentActivity implements
-LoaderManager.LoaderCallbacks<Cursor> {
+LoaderManager.LoaderCallbacks<CursorFeedCount> {
 
 	// The loader's unique id. Loader ids are specific to the Activity or
 	// Fragment in which they reside.
@@ -45,7 +45,7 @@ LoaderManager.LoaderCallbacks<Cursor> {
 
 	// on garde une trace pour pouvoir invalider le tout avec onContentChanged()
 	// PEUT ETRE NULL!!! (comme lorsqu'on change l'orientation de l'ecran...)
-	myASyncLoader asl;
+	//myASyncLoader asl;
 
 	// pour activer/desactiver un bout de menu
 	MenuItem menuRefresh=null;
@@ -112,8 +112,9 @@ LoaderManager.LoaderCallbacks<Cursor> {
 
 		// notre activite va fournir les callbacks de ce loader.
 		getSupportLoaderManager().initLoader(LOADER_ID, null,
-				(android.support.v4.app.LoaderManager.LoaderCallbacks<Cursor>) this);
+				(android.support.v4.app.LoaderManager.LoaderCallbacks<CursorFeedCount>) this);
 
+		
 
 		// access a la database
 		//		dbH=new DBHelper(this);
@@ -250,7 +251,10 @@ LoaderManager.LoaderCallbacks<Cursor> {
 		Context context;
 		int layout;
 		LayoutInflater inflater;
+		HashMap<String,Integer> feedCount; // nb d'articles pour chaque feed. utiliser setFeedCount()
 
+		public void setFeedCount(HashMap<String,Integer> fc) { feedCount=fc; }
+		
 		public MySimpleCursorAdapter(Context context, int layout,
 				String[] from, int[] to) {
 			// on passe null comme cursor alors il sera manage par un loader
@@ -258,6 +262,7 @@ LoaderManager.LoaderCallbacks<Cursor> {
 			this.context=context;
 			this.layout=layout;
 			inflater = (LayoutInflater)   getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+			feedCount=null; // sera modifie par le loader
 			Log.d("async","created MySimpleCursorAdapter");
 		}
 
@@ -273,6 +278,7 @@ LoaderManager.LoaderCallbacks<Cursor> {
 
 			Log.d("cursor","position="+cursor.getPosition());
 
+			
 			// 1 = feed, 2=category, 3=count
 			String feed=cursor.getString(1);
 			String cat=cursor.getString(2);
@@ -290,9 +296,9 @@ LoaderManager.LoaderCallbacks<Cursor> {
 			// ... comment
 			// pas sur que c'est genial... mais bon... on devrait passer cette info par le callback du loader onfinishedload
 			int nbItem;
-			if( ActivityUdeMListFC.this.asl!=null ) nbItem=ActivityUdeMListFC.this.asl.feedCount.get(feed);
+			if( feedCount!=null ) nbItem=feedCount.get(feed);
 			else nbItem=0;
-			
+
 			cb.setChecked(use);
 			vf.setText(ActivityUdeMListFC.this.feedName.get(feed)/*+"<"+cursor.getPosition()+">"*/);
 			vfc.setText(""+nbItem);
@@ -394,49 +400,54 @@ LoaderManager.LoaderCallbacks<Cursor> {
 			}
 			
 			// on va reloader l'info et mettre a jour l' affichage...
-			if( asl!=null ) asl.onContentChanged();
+			///if( asl!=null ) asl.onContentChanged();
+			// todo : comment forcer le load... sur le loader plutot que le asyncload
+			Loader<CursorFeedCount> loader=getSupportLoaderManager().getLoader(LOADER_ID);
+			loader.forceLoad();
 		}		
 	}
 
+
+	
+	
 	//
 	// callbacks du loaderManager
 	//
 
 	@Override
-	public Loader<Cursor> onCreateLoader(int loaderId, Bundle b) {
-//		return new myASyncLoader(this.getApplicationContext());
-		asl=new myASyncLoader(this.getApplicationContext());
-		return asl;
+	public Loader<CursorFeedCount> onCreateLoader(int loaderId, Bundle b) {
+		return new myASyncLoader(this.getApplicationContext());
 	}
 
 	@Override
-	public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-		adapter.swapCursor(data);
+	public void onLoadFinished(Loader<CursorFeedCount> loader, CursorFeedCount data) {
+		// les deux infos fraichement loadees
+		adapter.swapCursor(data.c);
+		adapter.setFeedCount(data.fc);
+		int t=data.total;
+		
 		// le total devrait etre passe dans data, mais on va aller le chercher directement
 		// ajuste l'affichage du total
-		if( nouvellesTotal!=null && this.asl!=null ) nouvellesTotal.setText(Integer.toString(this.asl.total)); // total
+		if( nouvellesTotal!=null ) nouvellesTotal.setText(Integer.toString(t));
 
 		// check isResumed() ...
 	}
 
 	@Override
-	public void onLoaderReset(Loader<Cursor> arg0) {
+	public void onLoaderReset(Loader<CursorFeedCount> loader) {
 		adapter.swapCursor(null);
+		adapter.setFeedCount(null);
 	}
 
 	//
 	// loader asynchrone
 	//
 
-	public static class myASyncLoader extends AsyncTaskLoader<Cursor> {
+	public static class myASyncLoader extends AsyncTaskLoader<CursorFeedCount> {
 		final ForceLoadContentObserver mObserver; // en cas de forceload
 
-		Cursor extendedCursor; // le data qui est retourne
-		//Cursor cursor; // le resultat du query
+		CursorFeedCount cfc; // le data qui est retourne
 
-		// une petite hasmap contenant le nombre d'item dans chaque feed...
-		HashMap<String,Integer> feedCount;
-		int total;
 
 		DBHelper dbh;
 		SQLiteDatabase db;
@@ -446,20 +457,23 @@ LoaderManager.LoaderCallbacks<Cursor> {
 			mObserver = new ForceLoadContentObserver();			
 			dbh=new DBHelper(context);
 			db=dbh.getReadableDatabase();
+
+			cfc=null;
 		}
 
 		@Override
-		public void deliverResult(Cursor data) {
+		public void deliverResult(CursorFeedCount data) {
 			Log.d("asyncloader","deliver results");
 
 			if (isReset()) {
 				// An async query came in while the loader is stopped.  We
 				// don't need the result.
-				if (extendedCursor != null) { releaseResources(extendedCursor); }
+				if (cfc != null) { releaseResources(cfc); }
 			}
-			Cursor oldC=extendedCursor;
-			extendedCursor=data;
-
+			// pour empecher un free() sur les vieux datas (qui sont reutilises...)
+			CursorFeedCount old=cfc;
+			cfc=data;
+			
 			// If the Loader is currently started, we can immediately
 			// deliver its results.
 			if (isStarted()) { super.deliverResult(data); }
@@ -467,18 +481,18 @@ LoaderManager.LoaderCallbacks<Cursor> {
 			// At this point we can release the resources associated with
 			// 'oldApps' if needed; now that the new result is delivered we
 			// know that it is no longer in use.
-			if (oldC != null && oldC!=extendedCursor && !oldC.isClosed()) { releaseResources(oldC); }
+			if (old != null && old!=cfc ) { releaseResources(old); }
 		}
 
 		// si on a des ressources a fermer
-		protected void releaseResources(Cursor c) {
+		protected void releaseResources(CursorFeedCount cfc) {
 			Log.d("async","should releasing cursor");
-			c.close();
+			if( cfc.c!=null && !cfc.c.isClosed() ) cfc.c.close();
 		}
 
 
 		@Override
-		public Cursor loadInBackground() {
+		public CursorFeedCount loadInBackground() {
 			//			 synchronized (this) {
 			//		            if (isLoadInBackgroundCanceled()) {
 			//		                throw new OperationCanceledException();
@@ -486,6 +500,10 @@ LoaderManager.LoaderCallbacks<Cursor> {
 			//		            mCancellationSignal = new CancellationSignal();
 			//		        }
 			//		        try {
+			
+			// une petite hasmap contenant le nombre d'item dans chaque feed...
+			HashMap<String,Integer> feedCount;
+			int total;
 
 			// count total
 			Log.d("asyncloader","load in background");
@@ -513,9 +531,6 @@ LoaderManager.LoaderCallbacks<Cursor> {
 				total+=nb;
 			}
 			c.close();
-			c=null;
-
-			//extendedCursor=db.rawQuery("select _id,feed,category,count(*) from timeline group by category order by feed asc, category asc", null);
 
 			Cursor cursor=db.rawQuery("select _id,feed,category,count(*) from timeline group by category order by feed asc, category asc", null);
 
@@ -530,7 +545,7 @@ LoaderManager.LoaderCallbacks<Cursor> {
 				j++;
 			}
 			Cursor[] cursors = { cursor, extras };
-			extendedCursor = new MergeCursor(cursors);
+			Cursor extendedCursor = new MergeCursor(cursors);
 
 			Log.d("loader","got extended="+extendedCursor+", cursor="+cursor+", extra="+extras);
 			
@@ -539,7 +554,13 @@ LoaderManager.LoaderCallbacks<Cursor> {
 				extendedCursor.getCount();
 				registerContentObserver(extendedCursor, mObserver);
 			}
-			return extendedCursor;
+			
+			CursorFeedCount cfc=new CursorFeedCount();
+			cfc.c=extendedCursor;
+			cfc.fc=feedCount;
+			cfc.total=total;
+						
+			return cfc;
 			//		        } finally {
 			//		            synchronized (this) {
 			//		                mCancellationSignal = null;
@@ -560,10 +581,10 @@ LoaderManager.LoaderCallbacks<Cursor> {
 			// TODO Auto-generated method stub
 			super.onStartLoading();
 			Log.d("async","on start loading");
-			if (extendedCursor!=null) {
-				deliverResult(extendedCursor); // already available!
+			if (cfc!=null) {
+				deliverResult(cfc); // already available!
 			}
-			if( takeContentChanged() || extendedCursor==null ) forceLoad();
+			if( takeContentChanged() || cfc==null ) forceLoad();
 		}
 
 		@Override
@@ -573,9 +594,9 @@ LoaderManager.LoaderCallbacks<Cursor> {
 		}
 
 		@Override
-	    public void onCanceled(Cursor cursor) {
-	        if (cursor != null && !cursor.isClosed()) {
-	            cursor.close();
+	    public void onCanceled(CursorFeedCount cfc) {
+	        if( cfc != null && cfc.c!=null && !cfc.c.isClosed() ) {
+	            cfc.c.close();
 	        }
 	    }
 
@@ -586,10 +607,10 @@ LoaderManager.LoaderCallbacks<Cursor> {
 	        // Ensure the loader is stopped
 	        onStopLoading();
 
-	        if (extendedCursor != null && !extendedCursor.isClosed()) {
-	            extendedCursor.close();
+	        if( cfc!=null && cfc.c!=null && !cfc.c.isClosed()) {
+	            cfc.c.close();
 	        }
-	        extendedCursor = null;
+	        cfc=null;
 	    }
 
 		
@@ -597,6 +618,17 @@ LoaderManager.LoaderCallbacks<Cursor> {
 
 
 }
+
+
+//
+// le data type du async loader contient un cursor+feedCount
+//
+class CursorFeedCount {
+	public Cursor c;  // le cursor pour les categories avec les count
+	public HashMap<String,Integer> fc; // le feedCount (nb d'article de chaque feed)
+	public int total; // nb total d'articles
+}
+
 
 
 
