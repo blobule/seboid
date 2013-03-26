@@ -15,8 +15,13 @@
     <!-- Application theme. -->
     <style name="AppTheme" parent="AppBaseTheme">
         <!-- All customizations that are NOT specific to a particular API-level can go here. -->
+         <item name="android:windowTitleBackgroundStyle">@style/WindowTitleBackground</item>
     </style>
 
+     <style name="WindowTitleBackground">     
+        <item name="android:background">@color/blub</item>                   
+    </style>
+    
     <style name="myWeb" parent="@android:style/Widget.WebView">
         <!-- rien pour l'instant -->
         <item name="android:background">#ffff0000</item>

@@ -3,6 +3,8 @@
         <!-- on utilise ces couleurs dans un web, donc string plutot que color -->
     <string name="webTextColor">#ffffff</string>
     <string name="webBackground">#000000</string>
-    <string name="webLinkColor">#6060ff</string> 
+    <string name="webLinkColor">#6060ff</string>
+    
+    <color name="blub">#ffff0000</color> 
     
 </resources>

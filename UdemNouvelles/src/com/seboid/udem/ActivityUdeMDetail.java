@@ -18,6 +18,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -26,6 +27,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.Browser;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -61,6 +63,9 @@ public class ActivityUdeMDetail extends Activity {
 	private ViewPager awesomePager;
 	private AwesomePagerAdapter awesomeAdapter;    
 
+	// pour les instructions...
+	SharedPreferences preferences;
+	SharedPreferences.Editor prefeditor;
 
 	//	DBHelper dbH;
 	//	SQLiteDatabase db;
@@ -115,6 +120,9 @@ public class ActivityUdeMDetail extends Activity {
 
 		//titreView.setText(nice);
 
+		//preferences.getInt("nbdetailview", -1);
+		
+		
 		//instructions();
 
 		//		web=(WebView)findViewById(R.id.web);
