@@ -63,14 +63,14 @@ public class ActivityDebugEvents extends Activity implements OnItemClickListener
 	// web asynchrone
 	//
 
-	class DownloadEventsTask extends AsyncTask<Void,Void,EventsReaderAPI> {
+	class DownloadEventsTask extends AsyncTask<Void,Void,EventsAPI> {
 		@Override
 		protected void onPreExecute() {
 			setProgressBarIndeterminateVisibility(true);
 		}
 
 		@Override
-		protected EventsReaderAPI doInBackground(Void... arg0) {
+		protected EventsAPI doInBackground(Void... arg0) {
 			//EventsAPI events=new EventsAPI("evenements",null,"2013-03-27","2013-03-27");
 			//EventsAPI events=new EventsAPI("categorie","2","2013-03-27","2013-03-30");
 			//EventsAPI events=new EventsAPI("groupe","7","2013-03-27","2013-03-30");
@@ -83,65 +83,18 @@ public class ActivityDebugEvents extends Activity implements OnItemClickListener
 			//now.allDay=true;
 			//now.normalize(true);
 			Log.d("events","today is "+now.format("%y-%m-%d"));
-			now.set(now.toMillis(true)+7*24*3600*1000);
-			Log.d("events","next week is "+now.format("%y-%m-%d"));
-
+			now.set(now.toMillis(true)+6*24*3600*1000);
+			Log.d("events","next week is "+now.format("%Y-%m-%d"));
 			
-//			textViewDay.setText(today.monthDay);             // Day of the month (0-31)
-//			textViewMonth.setText(today.month);              // Month (0-11)
-//			textViewYear.setText(today.year);                // Year 
-//			textViewTime.setText(today.format("%k:%M:%S"));  // Current time
-			
-			EventsReaderAPI e;
+			EventsAPI e;
 		
 			// le 2013-03-27 -> contient un super gros description <img base64 >
-			e=new EventsReaderAPI("evenements",null,"2013-03-27","2013-04-02");
-
-
-//			long total=0;
-//			
-//			d=System.currentTimeMillis();
-//			e=new EventsAPI("evenements",null,"2013-03-27","2013-03-27");
-//			d-=System.currentTimeMillis();total+=d;
-//			Log.d("event","single day is "+d/1000.0+" sec");
-//			
-//			d=System.currentTimeMillis();
-//			e=new EventsAPI("evenements",null,"2013-03-28","2013-03-28");
-//			d-=System.currentTimeMillis();total+=d;
-//			Log.d("event","single day is "+d/1000.0+" sec");
-//
-//			d=System.currentTimeMillis();
-//			e=new EventsAPI("evenements",null,"2013-03-29","2013-03-29");
-//			d-=System.currentTimeMillis();total+=d;
-//			Log.d("event","single day is "+d/1000.0+" sec");
-//
-//			d=System.currentTimeMillis();
-//			e=new EventsAPI("evenements",null,"2013-03-30","2013-03-30");
-//			d-=System.currentTimeMillis();total+=d;
-//			Log.d("event","single day is "+d/1000.0+" sec");
-//
-//			d=System.currentTimeMillis();
-//			e=new EventsAPI("evenements",null,"2013-03-31","2013-03-31");
-//			d-=System.currentTimeMillis();total+=d;
-//			Log.d("event","single day is "+d/1000.0+" sec");
-//
-//			d=System.currentTimeMillis();
-//			e=new EventsAPI("evenements",null,"2013-04-01","2013-04-01");
-//			d-=System.currentTimeMillis();total+=d;
-//			Log.d("event","single day is "+d/1000.0+" sec");
-//
-//			d=System.currentTimeMillis();
-//			e=new EventsAPI("evenements",null,"2013-04-02","2013-04-02");
-//			d-=System.currentTimeMillis();total+=d;
-//			Log.d("event","single day is "+d/1000.0+" sec");
-//
-//			Log.d("event","week total is "+total/1000.0+" sec");
-			
+			e=new EventsAPI("evenements",null,"2013-03-27","2013-04-02");
 			return e;
 		}
 
 		@Override
-		protected void onPostExecute(EventsReaderAPI result) {
+		protected void onPostExecute(EventsAPI result) {
 			setProgressBarIndeterminateVisibility(false);
 			//Toast.makeText(ActivityDebugEvents.this, "done", Toast.LENGTH_SHORT).show();
 			
@@ -151,7 +104,7 @@ public class ActivityDebugEvents extends Activity implements OnItemClickListener
 			//
 			// affiche!
 			//
-			String[] from= {"titre","date","heure_debut","heure_fin"};
+			String[] from= {"titre","date","description","type_horaire"};
 			int[] to= { R.id.text1,R.id.text2,R.id.text3,R.id.text4};
 			listv.setAdapter( new SimpleAdapter(ActivityDebugEvents.this, result.hmList,
 					R.layout.events_row,from,to) );

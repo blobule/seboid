@@ -2,7 +2,6 @@ package com.seboid.udemcalendrier;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,15 +13,16 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.graphics.drawable.Drawable;
 import android.net.ParseException;
 import android.text.Html;
-
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
-
-
+import android.util.Log;
 
 //
 // une classe qui charge une page web et parse le contenu JSON
@@ -46,24 +46,17 @@ import com.google.gson.stream.JsonToken;
 //
 // Load les data dans la bd.
 //
-// http://developer.android.com/reference/android/util/JsonReader.html
-//
-
-public class EventsAPI {
+public class EventsAPIOld {
 	// les informations intéressantes
 	//Drawable icone;
-
-	long time;
 
 	ArrayList<HashMap<String,String>> hmList;
 
 	// null si pas d'erreur
 	String erreur;
 
-	EventsAPI(String type,String id,String start,String end) {
+	EventsAPIOld(String type,String id,String start,String end) {
 		erreur=null;
-
-		time=System.currentTimeMillis();
 
 		//		String url="http://services.murmitoyen.com/udem/evenements/2013-03-26/2013-03-26";
 
@@ -71,83 +64,74 @@ public class EventsAPI {
 		if( !type.equals("evenements") ) url+="/"+id;
 		if( !type.equals("serie") ) url+="/"+start+"/"+end;
 
-		//		Log.d("events","loading "+url);
+//		Log.d("events","loading "+url);
 
 		hmList=new ArrayList<HashMap<String,String>>();
-
-		JsonReader jr;
-
 
 		try {
 			// lire la page web
 			HttpEntity page = getHttp(url);
+			String content = EntityUtils.toString(page,HTTP.UTF_8);
 
-			// on va filter les <img ... /> parce qu' elles sont base64 et trop grosses
-			myFilterInputStream in=new myFilterInputStream(page.getContent(),"<img","/>");
+			// JSON format
+			JSONObject js = new JSONObject(content);
+			// extraire les informations courantes
+			JSONArray obs = js.getJSONArray("donnees");
 
-			jr = new JsonReader(new InputStreamReader(in, "UTF-8"));
+		//	Log.d("event","nb child is "+obs.length());
 
-			try {
-				jr.beginObject();
-				while (jr.hasNext()) {
-					String name = jr.nextName();
-					//					Log.d("json","name is "+name);
-					if( name.equals("donnees") ) {
-						jr.beginArray();
-						while( jr.hasNext() ) {
-							hmList.add(readBase(jr));
-						}
-						jr.endArray();
-					}else jr.skipValue();
-				}
-				jr.endObject();
-			} finally {
-				jr.close();
+			// un evenement
+			HashMap<String,String> hm;
+
+			for(int i=0;i<obs.length();i++) {
+				JSONObject event=obs.getJSONObject(i);
+			//	Log.d("event",event.get("id")+" nbvalues= "+event.length());
+
+				hm=new HashMap<String,String>();
+
+				// Html.fromHtml est supposemment lent... a verifier...
+				hm.put("id",event.get("id").toString());
+				hm.put("titre",Html.fromHtml(event.get("titre").toString()).toString());
+				hm.put("url",event.get("url").toString());
+				hm.put("description",event.get("description").toString());
+				hm.put("date",event.get("date").toString());
+				hm.put("heure_debut",event.get("heure_debut").toString());
+				hm.put("heure_fin",event.get("heure_fin").toString());
+				hm.put("date_modif",event.get("date_modif").toString());
+				hm.put("type_horaire",event.get("type_horaire").toString());
+				hm.put("vignette",event.get("vignette").toString());
+				hm.put("image",event.get("image").toString());
+				
+				long d1=date2epoch(hm.get("date"),null);
+			//	Log.d("events","date start = "+d1);
+				
+				hmList.add(hm);
 			}
+
+			//			temperature=obs.getString("temp_c")+"c";
+			//			conditions=obs.getString("weather");
+			//			ville = obs.getJSONObject("display_location").getString("full");
+			//			
+			//			long epoch= Long.parseLong(obs.getString("observation_epoch"));
+			//			depuis=android.text.format.DateUtils.getRelativeTimeSpanString(epoch*1000);
+			//			
+			//			String iconName = obs.getString("icon");
+			//			if( iconName!=null ) {
+			//				Calendar cal= Calendar.getInstance();
+			//				int h=cal.get(Calendar.HOUR_OF_DAY);
+			//				// on devrait comparer a astronomy:sunset et sunrise
+			//				icone=loadHttpImage("http://icons.wxug.com/i/c/a/"+((h>16 || h<7)?"nt_":"")+iconName+".gif");
+			//			}
 		} catch (ClientProtocolException e) {
 			erreur="erreur http(protocol):"+e.getMessage();
 		} catch (IOException e) {
 			erreur="erreur http(IO):"+e.getMessage();
 		} catch (ParseException e) {
 			erreur="erreur JSON(parse):"+e.getMessage();
-		} 
-
-
-		time=System.currentTimeMillis()-time;
-	}
-
-	//
-	// JSON: donnees
-	//
-	//	id, titre, url, description, date, heure_debut, heure_fin,
-	//  date_modif, type_horaire, vignette, image
-	//
-	HashMap<String,String> readBase(JsonReader jr) throws IOException {
-		HashMap<String,String> hm=new HashMap<String,String>();
-		jr.beginObject();
-		while( jr.hasNext() ) {
-			String n= jr.nextName();
-			String v="null"; // les null deviennent des "null" pour l'instant
-			if( jr.peek()==JsonToken.NULL ) jr.nextNull();
-			else v=jr.nextString();
-			v=Html.fromHtml(v).toString();
-			hm.put(n,v);
+		} catch (JSONException e) {
+			erreur="erreur JSON:"+e.getMessage();
 		}
-		jr.endObject();
-		// process certains champs...
-		//long d1=date2epoch(hm.get("date"),null);
-		//
-		// champs calcules
-		//
-		
-		// les heures de depart et fin en long
-		hm.put("epoch_debut", Long.toString(TempsUtil.dateHeure2epoch(hm.get("date"),hm.get("heure_debut"),true)));
-		hm.put("epoch_fin", Long.toString(TempsUtil.dateHeure2epoch(hm.get("date"),hm.get("heure_fin"),false)));
-		
-		return hm;
 	}
-
-
 
 	//
 	// lire une page web et retourner le contenu
@@ -170,6 +154,22 @@ public class EventsAPI {
 		return d;
 	}
 
-
+	private long date2epoch(String date,String time) {
+		String str = "Jun 13 2003 23:11:52.454 UTC";
+		SimpleDateFormat df;
+		Date d;
+		try {
+			if( time!=null ) {
+				df=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				d=df.parse(date);
+			}else{
+				df=new SimpleDateFormat("yyyy-MM-dd");	    	
+				d=df.parse(date+" "+time);
+			}
+			return(d.getTime());
+		} catch( Exception e ) {
+			return(0);
+		}
+	}
 
 }

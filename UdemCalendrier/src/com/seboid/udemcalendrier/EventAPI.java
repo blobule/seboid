@@ -2,6 +2,7 @@ package com.seboid.udemcalendrier;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
@@ -12,16 +13,14 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.util.EntityUtils;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import android.graphics.drawable.Drawable;
 import android.net.ParseException;
 import android.text.Html;
 import android.util.Log;
+
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 
 //
 // une classe qui charge une page web et parse le contenu JSON
@@ -31,113 +30,175 @@ import android.util.Log;
 //
 
 public class EventAPI {
-	// les info interessantes
-	HashMap<String,String> hm;
+	// base
+	HashMap<String,String> base;
+	// lieu
+	ArrayList<HashMap<String,String>> lieuList;
+	// categorie
+	ArrayList<HashMap<String,String>> catList;
+	// groupe
+	ArrayList<HashMap<String,String>> groupeList;
+	// souscategorie
+	ArrayList<HashMap<String,String>> souscatList;
 
 	// null si pas d'erreur
 	String erreur;
+	long time;
 
-	EventAPI() {
+	EventAPI(String id) {
 		int i;
 
 		erreur=null;
-		String url="http://services.murmitoyen.com/udem/evenement/141154";
+		String url="http://services.murmitoyen.com/udem/evenement/"+id;
 
-		hm=new HashMap<String,String>();
+		time=System.currentTimeMillis();
+
+		base=null;
+		lieuList=new ArrayList<HashMap<String,String>>();
+		catList=new ArrayList<HashMap<String,String>>();
+		groupeList=new ArrayList<HashMap<String,String>>();
+		souscatList=new ArrayList<HashMap<String,String>>();
+
+		JsonReader jr;
 
 		try {
 			// lire la page web
 			HttpEntity page = getHttp(url);
-			String content = EntityUtils.toString(page,HTTP.UTF_8);
 
-			// JSON format
-			JSONObject js = new JSONObject(content);
-			// extraire les informations courantes
-			JSONObject obs = js.getJSONObject("donnees");
+			// on va filter les <img ... /> parce qu' elles sont base64 et trop grosses
+			myFilterInputStream in=new myFilterInputStream(page.getContent(),"<img","/>");
 
-			Log.d("event","nb keys is "+obs.length());
+			jr = new JsonReader(new InputStreamReader(in, "UTF-8"));
 
-			//
-			// base
-			//
-			JSONObject base=obs.getJSONArray("base").getJSONObject(0); // premier seulement
-
-			Log.d("event","base id="+base.get("id")+" nbval="+base.length());
-
-			String tags[] = {"id","description","contact_tel","contact_url","serie","date","heure_debut"
-					,"heure_fin","type_horaire","vignette","image"};
-			String tagsH[] = {"titre","contact_nom","contact_courriel","cout"};
-
-			for(i=0;i<tags.length;i++)
-				hm.put(tags[i],base.getString(tags[i]));
-			for(i=0;i<tagsH.length;i++)
-				hm.put(tagsH[i],Html.fromHtml(base.getString(tagsH[i])).toString());
-			base=null;
-
-			//
-			// lieu
-			//
-			JSONObject lieu=obs.getJSONArray("lieu").getJSONObject(0); // premier seulement
-
-			tags = new String[] {"id_lieu","code_postal","latitude","longitude" };
-			tagsH = new String[] {"lieu_nom","salle","adresse","adresse2","ville","province","pays"};
-
-			for(i=0;i<tags.length;i++)
-				hm.put(tags[i],lieu.getString(tags[i]));
-			for(i=0;i<tagsH.length;i++)
-				hm.put(tagsH[i],Html.fromHtml(lieu.getString(tagsH[i])).toString());
-			lieu=null;
-
-			//
-			// categories
-			//
-			JSONObject cat=obs.getJSONArray("categories").getJSONObject(0); // premier seulement
-
-			hm.put("id_categorie",cat.getString("id_categorie"));
-			hm.put("categorie_nom",Html.fromHtml(cat.getString("categorie_nom")).toString());
-			cat=null;
-
-			// groupes
-			JSONObject groupe=obs.getJSONArray("groupes").getJSONObject(0); // premier seulement
-
-			hm.put("id_groupe",groupe.getString("id_groupe"));
-			hm.put("groupe_nom",Html.fromHtml(groupe.getString("groupe_nom")).toString());
-			groupe=null;
-			
-			// souscategories
-			JSONObject scat=obs.getJSONArray("souscategories").getJSONObject(0); // premier seulement
-
-			// attention ici on change le nom du stockage du tag
-			hm.put("id_souscategorie",scat.getString("id_categorie"));
-			hm.put("souscategorie_nom",Html.fromHtml(scat.getString("categorie_nom")).toString());
-			scat=null;
-
-			// debug output		
-			Set<String> ss = hm.keySet();
-			for( String s : ss ) {
-				Log.d("event",s+" = "+hm.get(s));
+			try {
+				jr.beginObject();
+				while (jr.hasNext()) {
+					String n1 = jr.nextName();
+					if( n1.equals("donnees") ) {
+						jr.beginObject();
+						while( jr.hasNext() ) {
+							String n2 = jr.nextName();
+							if( n2.equals("base") ) {
+								jr.beginArray();
+								if( jr.hasNext() ) base=readGeneric(jr); // on prend seulement le premier
+								while( jr.hasNext() ) jr.skipValue();
+								jr.endArray();
+							}else if( n2.equals("lieu") ) {
+								jr.beginArray();
+								while( jr.hasNext() ) lieuList.add(readGeneric(jr));
+								jr.endArray();
+							}else if( n2.equals("categories") ) {
+								jr.beginArray();
+								while( jr.hasNext() ) catList.add(readGeneric(jr));
+								jr.endArray();
+							}else if( n2.equals("groupes") ) {
+								jr.beginArray();
+								while( jr.hasNext() ) groupeList.add(readGeneric(jr));
+								jr.endArray();
+							}else if( n2.equals("souscategories") ) {								
+								jr.beginArray();
+								while( jr.hasNext() ) souscatList.add(readGeneric(jr));
+								jr.endArray();
+							}else jr.skipValue();
+						}
+						jr.endObject();
+					}else jr.skipValue();
+				}
+				jr.endObject();
+			} finally {
+				jr.close();
 			}
-
-			//			long epoch= Long.parseLong(obs.getString("observation_epoch"));
-			//			depuis=android.text.format.DateUtils.getRelativeTimeSpanString(epoch*1000);
-			//			
-			//			String iconName = obs.getString("icon");
-			//			if( iconName!=null ) {
-			//				Calendar cal= Calendar.getInstance();
-			//				int h=cal.get(Calendar.HOUR_OF_DAY);
-			//				// on devrait comparer a astronomy:sunset et sunrise
-			//				icone=loadHttpImage("http://icons.wxug.com/i/c/a/"+((h>16 || h<7)?"nt_":"")+iconName+".gif");
-			//			}
 		} catch (ClientProtocolException e) {
 			erreur="erreur http(protocol):"+e.getMessage();
 		} catch (IOException e) {
 			erreur="erreur http(IO):"+e.getMessage();
 		} catch (ParseException e) {
 			erreur="erreur JSON(parse):"+e.getMessage();
-		} catch (JSONException e) {
-			erreur="erreur JSON:"+e.getMessage();
 		}
+
+		//
+		// champs calcules...
+		//
+		// on ajoute a la base une liste des lieux, cat, groupe, souscat id en string
+		//
+		String z;
+		String lieux=null;
+		for( HashMap<String,String> hm : lieuList ) {
+			if( (z=hm.get("id_lieu"))!=null ) { if( lieux==null ) lieux=z; else lieux+=","+z; }
+		}
+		String categories=null;
+		for( HashMap<String,String> hm : catList ) {
+			if( (z=hm.get("id_categorie"))!=null ) {
+				if( categories==null ) categories=z; else categories+=","+z;
+			}
+		}
+		String groupes=null;
+		for( HashMap<String,String> hm : groupeList ) {
+			if( (z=hm.get("id_groupe"))!=null ) {
+				if( groupes==null ) groupes=z; else groupes+=","+z;
+			}
+		}
+		String souscategories=null;
+		for( HashMap<String,String> hm : souscatList ) {
+			if( (z=hm.get("id_categorie"))!=null ) {
+				if( souscategories==null ) souscategories=z; else souscategories+=","+z;
+			}
+		}
+
+		
+		// ajoute a la base
+		base.put("ids_lieux",lieux);
+		base.put("ids_categories",categories);
+		base.put("ids_groupes",groupes);
+		base.put("ids_souscategories",souscategories);		
+
+		// les heures de depart et fin en long
+		base.put("epoch_debut", Long.toString(TempsUtil.dateHeure2epoch(base.get("date"),base.get("heure_debut"),true)));
+		base.put("epoch_fin", Long.toString(TempsUtil.dateHeure2epoch(base.get("date"),base.get("heure_fin"),false)));
+		
+		time=System.currentTimeMillis()-time;
+		
+		// debug output
+		Set<String> ss;
+
+		for( String s : base.keySet() ) Log.d("event","base:"+s+"="+base.get(s));
+		for( HashMap<String,String> hm : lieuList ) {
+			for( String s : hm.keySet() ) Log.d("event","lieu:"+s+"="+hm.get(s));
+		}
+		for( HashMap<String,String> hm : catList ) {
+			for( String s : hm.keySet() ) Log.d("event","cat:"+s+"="+hm.get(s));
+		}
+		for( HashMap<String,String> hm : groupeList ) {
+			for( String s : hm.keySet() ) Log.d("event","groupe:"+s+"="+hm.get(s));
+		}
+		for( HashMap<String,String> hm : souscatList ) {
+			for( String s : hm.keySet() ) Log.d("event","souscat:"+s+"="+hm.get(s));
+		}
+
 	}
+
+	//
+	// JSON: read generic object data into hashmap
+	//
+	HashMap<String,String> readGeneric(JsonReader jr) throws IOException {
+		HashMap<String,String> hm;
+		hm=new HashMap<String,String>();
+
+		jr.beginObject();
+		while( jr.hasNext() ) {
+			String n= jr.nextName();
+			String v="null"; // les null deviennent des "null" pour l'instant
+			if( jr.peek()==JsonToken.NULL ) jr.nextNull();
+			else v=jr.nextString();
+			v=Html.fromHtml(v).toString(); // convertir &eacute; en e aigu utf8
+			hm.put(n,v);
+		}
+		jr.endObject();
+		// process certains champs...
+		//long d1=date2epoch(hm.get("date"),null);		
+		return hm;
+	}
+
 
 	//
 	// lire une page web et retourner le contenu

@@ -59,18 +59,18 @@ public class ActivityDebugEvent extends Activity {
 
 		@Override
 		protected EventAPI doInBackground(Void... arg0) {
-			EventAPI events=new EventAPI();
+			EventAPI events=new EventAPI("180047");
 			return events;
 		}
 
 		@Override
 		protected void onPostExecute(EventAPI result) {
 			setProgressBarIndeterminateVisibility(false);
-			Toast.makeText(ActivityDebugEvent.this, result.erreur==null?"done":result.erreur, Toast.LENGTH_SHORT).show();
+			Toast.makeText(ActivityDebugEvent.this, result.erreur==null?("time="+result.time/1000.):result.erreur, Toast.LENGTH_SHORT).show();
 			//
 			// affiche!
 			//
-			tvId.setText(result.hm.get("id"));
+			tvId.setText(result.base.get("id"));
 		}
 	}
 	
