@@ -93,11 +93,10 @@ public class ActivityDebugEvents extends Activity implements OnItemClickListener
 //			textViewTime.setText(today.format("%k:%M:%S"));  // Current time
 			
 			EventsReaderAPI e;
-			long d=System.currentTimeMillis();
+		
 			// le 2013-03-27 -> contient un super gros description <img base64 >
 			e=new EventsReaderAPI("evenements",null,"2013-03-27","2013-04-02");
-			d-=System.currentTimeMillis();
-			Log.d("event","week load is "+d/1000.0+" sec");
+
 
 //			long total=0;
 //			
@@ -144,7 +143,11 @@ public class ActivityDebugEvents extends Activity implements OnItemClickListener
 		@Override
 		protected void onPostExecute(EventsReaderAPI result) {
 			setProgressBarIndeterminateVisibility(false);
-			Toast.makeText(ActivityDebugEvents.this, "done", Toast.LENGTH_SHORT).show();
+			//Toast.makeText(ActivityDebugEvents.this, "done", Toast.LENGTH_SHORT).show();
+			
+			//Log.d("event","week load is "+result.time/1000.0+" sec");
+			Toast.makeText(ActivityDebugEvents.this,"Load time is "+result.time/1000.0+" sec",Toast.LENGTH_LONG).show();
+
 			//
 			// affiche!
 			//

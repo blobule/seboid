@@ -58,6 +58,7 @@ public class EventsReaderAPI {
 	// les informations intéressantes
 	//Drawable icone;
 
+	long time;
 
 	ArrayList<HashMap<String,String>> hmList;
 
@@ -66,6 +67,8 @@ public class EventsReaderAPI {
 
 	EventsReaderAPI(String type,String id,String start,String end) {
 		erreur=null;
+		
+		time=System.currentTimeMillis();
 
 		//		String url="http://services.murmitoyen.com/udem/evenements/2013-03-26/2013-03-26";
 
@@ -208,6 +211,7 @@ public class EventsReaderAPI {
 		} catch (ParseException e) {
 			erreur="erreur JSON(parse):"+e.getMessage();
 		} 
+		time=System.currentTimeMillis()-time;
 	}
 
 	//
