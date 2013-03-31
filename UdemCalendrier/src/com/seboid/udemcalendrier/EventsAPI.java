@@ -130,7 +130,8 @@ public class EventsAPI {
 			String v="null"; // les null deviennent des "null" pour l'instant
 			if( jr.peek()==JsonToken.NULL ) jr.nextNull();
 			else v=jr.nextString();
-			v=Html.fromHtml(v).toString();
+			// on ne doit pas convertir la description...
+			if( !n.equals("description") ) v=Html.fromHtml(v).toString();
 			hm.put(n,v);
 		}
 		jr.endObject();

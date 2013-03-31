@@ -5,9 +5,45 @@
     android:orientation="vertical" >
 
     <Button
+        android:id="@+id/buttonCat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Categories" />
+
+    <Button
+        android:id="@+id/buttonSCat"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sous-Categories" />
+    
+        <Button
+        android:id="@+id/buttonGroupes"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Groupes" />
+        
+                <Button
+        android:id="@+id/buttonLieux"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Lieux" />
+
+    <Button
         android:id="@+id/buttonEvents"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Events" />
+
+    <Button
+        android:id="@+id/buttonMAJ"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Mise a jour" />
+
+    <Button
+        android:id="@+id/buttonReset"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Reset DB" />
 
 </LinearLayout>

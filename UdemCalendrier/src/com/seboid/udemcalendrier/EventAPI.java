@@ -45,12 +45,14 @@ public class EventAPI {
 	String erreur;
 	long time;
 
-	EventAPI(String id) {
+	EventAPI(int id) {
 		int i;
 
 		erreur=null;
 		String url="http://services.murmitoyen.com/udem/evenement/"+id;
 
+		Log.d("event","loading '"+url+"'");
+		
 		time=System.currentTimeMillis();
 
 		base=null;
@@ -74,6 +76,7 @@ public class EventAPI {
 				jr.beginObject();
 				while (jr.hasNext()) {
 					String n1 = jr.nextName();
+					Log.d("event","got >"+n1+"<");
 					if( n1.equals("donnees") ) {
 						jr.beginObject();
 						while( jr.hasNext() ) {
@@ -129,28 +132,33 @@ public class EventAPI {
 		String categories=null;
 		for( HashMap<String,String> hm : catList ) {
 			if( (z=hm.get("id_categorie"))!=null ) {
-				if( categories==null ) categories=z; else categories+=","+z;
+				if( categories==null ) categories=z; else categories+=":"+z;
 			}
 		}
 		String groupes=null;
 		for( HashMap<String,String> hm : groupeList ) {
 			if( (z=hm.get("id_groupe"))!=null ) {
-				if( groupes==null ) groupes=z; else groupes+=","+z;
+				if( groupes==null ) groupes=z; else groupes+=":"+z;
 			}
 		}
 		String souscategories=null;
 		for( HashMap<String,String> hm : souscatList ) {
 			if( (z=hm.get("id_categorie"))!=null ) {
-				if( souscategories==null ) souscategories=z; else souscategories+=","+z;
+				if( souscategories==null ) souscategories=z; else souscategories+=":"+z;
 			}
 		}
 
+		if( base==null ) {
+			Log.d("event","erreur loading event");
+			erreur="Erreur url='"+url+"'";
+			return;
+		}
 		
 		// ajoute a la base
-		base.put("ids_lieux",lieux);
-		base.put("ids_categories",categories);
-		base.put("ids_groupes",groupes);
-		base.put("ids_souscategories",souscategories);		
+		base.put("ids_lieux",":"+lieux+":");
+		base.put("ids_categories",":"+categories+":");
+		base.put("ids_groupes",":"+groupes+":");
+		base.put("ids_souscategories",":"+souscategories+":");		
 
 		// les heures de depart et fin en long
 		base.put("epoch_debut", Long.toString(TempsUtil.dateHeure2epoch(base.get("date"),base.get("heure_debut"),true)));
@@ -181,8 +189,7 @@ public class EventAPI {
 	// JSON: read generic object data into hashmap
 	//
 	HashMap<String,String> readGeneric(JsonReader jr) throws IOException {
-		HashMap<String,String> hm;
-		hm=new HashMap<String,String>();
+		HashMap<String,String> hm=new HashMap<String,String>();
 
 		jr.beginObject();
 		while( jr.hasNext() ) {
@@ -190,7 +197,7 @@ public class EventAPI {
 			String v="null"; // les null deviennent des "null" pour l'instant
 			if( jr.peek()==JsonToken.NULL ) jr.nextNull();
 			else v=jr.nextString();
-			v=Html.fromHtml(v).toString(); // convertir &eacute; en e aigu utf8
+			if( !n.equals("description") ) v=Html.fromHtml(v).toString(); // convertir &eacute; en e aigu utf8.. enleve les tags html
 			hm.put(n,v);
 		}
 		jr.endObject();
