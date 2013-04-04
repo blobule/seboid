@@ -62,7 +62,7 @@ public class ServiceMiseAJour extends IntentService {
 
 		//long past = (long)(System.currentTimeMillis()/1000 - Long.parseLong(preferences.getString("savetime","365"))*24*3600);		
 
-		EventsAPI events=new EventsAPI("evenements",null,"2013-03-30","2013-04-3");
+		EventsAPI events=new EventsAPI("evenements",null,"2013-04-03","2013-04-9");
 		if( events==null || events.erreur!=null ) {
 			Log.d(TAG,"events null");
 			return;

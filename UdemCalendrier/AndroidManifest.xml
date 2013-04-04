@@ -29,6 +29,10 @@
             android:name="com.seboid.udemcalendrier.ActivityDebugEvents"
             android:label="@string/app_name" >
         </activity>
+                <activity
+            android:name="com.seboid.udemcalendrier.ActivityDebugEventsSwipe"
+            android:label="@string/app_name" >
+        </activity>
         <activity
             android:name="com.seboid.udemcalendrier.ActivityDebugEvent"
             android:label="@string/app_name" >

@@ -67,7 +67,8 @@ public class ActivityDebug extends Activity implements OnClickListener {
 			ActivityDebug.this.startService(in);
 			break;
 		case R.id.buttonEvents:
-			in = new Intent(this,ActivityDebugEvents.class);
+//			in = new Intent(this,ActivityDebugEvents.class);
+			in = new Intent(this,ActivityDebugEventsSwipe.class);
 			startActivity(in);
 			break;
 		case R.id.buttonReset:

@@ -333,6 +333,7 @@ public class ActivityUdeMDetail extends Activity {
 		public Object instantiateItem(View collection, int position) {
 			Log.d("detail", "instantiate view @ "+position);
 
+//			LinearLayout detail = (LinearLayout)inflater.inflate(R.layout.detail_page_bleed,null);
 			LinearLayout detail = (LinearLayout)inflater.inflate(R.layout.detail_page,null);
 
 			//Log.d("detail", "inflate "+position+" ok");

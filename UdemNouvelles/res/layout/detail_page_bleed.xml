@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0" >
+
+        <ImageView
+            android:id="@+id/detail_image"
+            android:layout_width="fill_parent"
+            android:layout_height="150dp"
+            android:layout_centerInParent="true"
+            android:layout_margin="5dp"
+            android:layout_weight="0"
+            android:scaleType="fitXY"
+            android:src="@drawable/udem"
+            android:visibility="visible" />
+
+        <ProgressBar
+            android:id="@+id/detail_loading"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_weight="0" />
+
+        <TextView
+            android:id="@+id/detail_titre"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:paddingLeft="5dp"
+            android:text="Large Text"
+            android:textAppearance="?android:attr/textAppearanceMedium" />
+
+        <TextView
+            android:id="@+id/detail_cat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/detail_titre"
+            android:layout_weight="0"
+            android:paddingLeft="5dp"
+            android:text="Medium Text"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textColor="#ffff9000" />
+
+    </RelativeLayout>
+
+    <WebView
+        android:id="@+id/detail_web"
+        style="@android:style/Widget.WebView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:paddingTop="5dp" />
+
+</LinearLayout>
