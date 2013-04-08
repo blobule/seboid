@@ -30,7 +30,7 @@
         </activity>
         <activity
             android:name=".ActivityUdeMDetail"
-            android:label="UdeM|Nouvelles" >
+            android:label="Nouvelles" >
         </activity>
         <activity
             android:name=".ActivityUdeMListFeed"

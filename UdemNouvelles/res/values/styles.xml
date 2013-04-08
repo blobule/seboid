@@ -5,28 +5,35 @@
         by AppBaseTheme from res/values-vXX/styles.xml on newer devices.
     -->
     <style name="AppBaseTheme" parent="android:Theme.Holo">
+
         <!--
             Theme customizations available in newer API levels can go in
             res/values-vXX/styles.xml, while customizations related to
             backward-compatibility can go here.
         -->
+        <!-- juste pour api10, en fait... -->
+        <item name="android:scrollHorizontally">false</item>
+        <item name="android:maxLines">100</item>
     </style>
 
     <!-- Application theme. -->
     <style name="AppTheme" parent="AppBaseTheme">
+
         <!-- All customizations that are NOT specific to a particular API-level can go here. -->
-         <item name="android:windowTitleBackgroundStyle">@style/WindowTitleBackground</item>
+        <!--  <item name="android:windowTitleBackgroundStyle">@style/WindowTitleBackground</item>-->
     </style>
 
+    
      <style name="WindowTitleBackground">     
         <item name="android:background">@color/blub</item>                   
     </style>
     
+
     <style name="myWeb" parent="@android:style/Widget.WebView">
+
         <!-- rien pour l'instant -->
         <item name="android:background">#ffff0000</item>
         <item name="android:textColor">#ff0000ff</item>
     </style>
 
-    
 </resources>

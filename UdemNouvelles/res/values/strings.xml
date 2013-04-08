@@ -16,6 +16,7 @@
     <!-- dans le menu -->
     <string name="preferences">Préférences</string>
     <string name="mettre_a_jour">Mettre à jour</string>
+        <string name="help">Instructions</string>
      <string name="sources">Sources</string>
     <string name="partager">Partager</string>
     <string name="favori">Conserver</string>

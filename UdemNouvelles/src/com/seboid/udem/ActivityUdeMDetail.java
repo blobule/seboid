@@ -27,7 +27,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.provider.Browser;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -40,6 +39,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -93,7 +94,33 @@ public class ActivityUdeMDetail extends Activity {
 		getWindow().requestFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
 
 		setContentView(R.layout.detail);
+		
+		
+//		getWindow().setBackgroundDrawable(getResources().getDrawable(R.drawable.transition1));
 
+		// animation du fond du layout
+
+//		final View fond= findViewById(R.id.fond_detail);
+//		fond.setBackgroundDrawable(getResources().getDrawable(R.drawable.udem_banniere_full));
+//		Animation anim = AnimationUtils.loadAnimation(this, R.anim.fadeinout);
+//		//Now Set your animation
+//		anim.setAnimationListener(new Animation.AnimationListener() {
+//			@Override
+//			public void onAnimationEnd(Animation animation) {
+//				fond.setBackgroundDrawable(null);
+//			}
+//			@Override
+//			public void onAnimationRepeat(Animation animation) { }
+//			@Override
+//			public void onAnimationStart(Animation animation) { }
+//		});
+//		fond.startAnimation(anim);
+		
+//		RelativeLayout layout=(RelativeLayout) findViewById(R.id.rel);
+//		TransitionDrawable trans = (TransitionDrawable) layout.getBackground();
+//		trans.startTransition(2000);
+		
+		
 		// le titre en gros
 		//TextView titreView=(TextView)findViewById(R.id.webtitre);
 
@@ -243,6 +270,9 @@ public class ActivityUdeMDetail extends Activity {
 		switch(item.getItemId()) {
 		case R.id.menushare:
 			shareIt();
+			break;
+		case R.id.menuhelpdetail:
+			instructions();
 			break;
 //		case R.id.menusave:
 //		{
@@ -582,8 +612,9 @@ public class ActivityUdeMDetail extends Activity {
 
 	public void instructions() {
 		AlertDialog.Builder adb = new AlertDialog.Builder(this);
-		adb.setTitle("Set Title here");
-		adb.setMessage("Set the Text Message here");
+		adb.setIcon(R.drawable.ic_launcher);
+		adb.setTitle("Nouvelle détaillée");
+		adb.setMessage("Utilisez swipe pour passer d'une nouvelle à l'autre...\nblub\ntotoblub");
 		adb.setPositiveButton("Ok", new DialogInterface.OnClickListener()
 		{
 			public void onClick(DialogInterface dialog, int id)
@@ -591,15 +622,14 @@ public class ActivityUdeMDetail extends Activity {
 				// Action for 'Ok' Button
 			}
 		});
-		adb.setNegativeButton("Cancel", new DialogInterface.OnClickListener()
-		{
-			public void onClick(DialogInterface dialog, int id)
-			{
-				// Action for 'Cancel' Button
-				dialog.cancel();
-			}
-		});
-		adb.setIcon(R.drawable.ic_launcher);
+//		adb.setNegativeButton("Cancel", new DialogInterface.OnClickListener()
+//		{
+//			public void onClick(DialogInterface dialog, int id)
+//			{
+//				// Action for 'Cancel' Button
+//				dialog.cancel();
+//			}
+//		});
 		adb.show();
 	}
 

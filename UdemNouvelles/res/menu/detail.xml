@@ -7,6 +7,12 @@
         android:showAsAction="ifRoom"
         android:title="@string/partager">
     </item>
+        <item
+        android:id="@+id/menuhelpdetail"
+        android:icon="@android:drawable/ic_menu_help"
+        android:showAsAction="ifRoom"
+        android:title="@string/help">
+    </item>
     <!--
     <item
         android:id="@+id/menusave"

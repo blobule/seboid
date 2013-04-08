@@ -29,18 +29,39 @@
             android:text="35"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:textColor="#33b5e9" />
-
     </LinearLayout>
 
-    <ImageView
-        android:id="@+id/imageView1"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:adjustViewBounds="false"
-        android:baselineAlignBottom="false"
-        android:cropToPadding="false"
-        android:scaleType="fitXY"
-        android:src="@drawable/udem_banniere_full" />
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="48dp" >
+
+        <ImageView
+            android:id="@+id/imageView1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:adjustViewBounds="true"
+            android:scaleType="fitXY"
+            android:src="@drawable/udem_ban_left" />
+
+        <ImageView
+            android:id="@+id/imageView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:scaleType="fitXY"
+            android:src="@drawable/udem_ban_middle" />
+
+        <ImageView
+            android:id="@+id/imageView3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:src="@drawable/udem_ban_right" />
+    </LinearLayout>
 
     <ListView
         android:id="@+id/list"

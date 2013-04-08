@@ -9,17 +9,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="0"
+        android:maxLines="100"
         android:paddingLeft="5dp"
+        android:scrollHorizontally="false"
         android:text="Medium Text"
         android:textAppearance="?android:attr/textAppearanceSmall"
         android:textColor="#ffff9000" />
 
+    <!-- dans api10, on doit ajouter maxlines=100 et scrollhoriontally=false pour que le texte soit multi-ligne -->
+
     <TextView
         android:id="@+id/detail_titre"
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_weight="0"
+        android:maxLines="100"
         android:paddingLeft="5dp"
+        android:scrollHorizontally="false"
         android:text="Large Text"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
@@ -46,7 +52,6 @@
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
             android:layout_weight="0" />
-
     </RelativeLayout>
 
     <WebView
