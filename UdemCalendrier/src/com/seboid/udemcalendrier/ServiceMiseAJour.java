@@ -9,6 +9,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
@@ -28,9 +29,8 @@ public class ServiceMiseAJour extends IntentService {
 
 	static final String TAG="service";
 
-
 	public ServiceMiseAJour() {
-		super(TAG);
+		super(TAG); // important
 	}
 
 
@@ -45,41 +45,61 @@ public class ServiceMiseAJour extends IntentService {
 	public void onHandleIntent(Intent intent) {
 		Log.d(TAG,"onHandle!");
 
-		// commence par demander un "busy" si l'app ecoute ce signal...
-		//Intent in=new Intent("com.seboid.udem.BUSY");
-		//in.putExtra("busy",true);
-		//sendBroadcast(in);
-
 		if( !networkOK() ) return;
+		
+		// commence par demander un "busy" si l'app ecoute ce signal...
+		Intent in=new Intent("com.seboid.udem.BUSY");
+		in.putExtra("busy",true);
+		sendBroadcast(in);
 
+		// extract period info..
+		long now=System.currentTimeMillis();
+		long start=intent.getLongExtra("start",now);
+		long stop=intent.getLongExtra("stop",now+6*24*3600*1000);
+
+		String startDay=TempsUtil.aujourdhui(start,0);
+		String stopDay=TempsUtil.aujourdhui(stop,0);
+		
 		NotificationManager mNM;
 		mNM = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
 
-
 		SharedPreferences preferences=PreferenceManager.getDefaultSharedPreferences(ServiceMiseAJour.this);
-		int nb=0;
-
 
 		//long past = (long)(System.currentTimeMillis()/1000 - Long.parseLong(preferences.getString("savetime","365"))*24*3600);		
 
-		EventsAPI events=new EventsAPI("evenements",null,"2013-04-03","2013-04-9");
+		//
+		// load all event summaries
+		//
+		EventsAPI events=new EventsAPI("evenements",null,startDay,stopDay);
 		if( events==null || events.erreur!=null ) {
 			Log.d(TAG,"events null");
+			// enlever le BUSY
+			in=new Intent("com.seboid.udem.BUSY");
+			in.putExtra("busy",false);
+			sendBroadcast(in);
+
 			return;
 		}
 
 		DBHelper dbH=new DBHelper(this);
 		SQLiteDatabase db=dbH.getWritableDatabase();
 
+		int nb=0;
 		
 		HashMap<String,String> hm;
 		ContentValues val = new ContentValues();
 		for(int i=0;i<events.hmList.size();i++) {
 			hm=events.hmList.get(i);
 
+			// passer en determinate
+			in=new Intent("com.seboid.udem.BUSY");
+			in.putExtra("progress",(i*10000)/(events.hmList.size()-1));
+			sendBroadcast(in);
+			
 			//if( (Integer)hm.get("time") < past ) { }
 
 			int id=Integer.parseInt(hm.get("id"));
+			long modif=Long.parseLong(hm.get("epoch_modif"));
 			
 			// ajouter a la base de donnee
 			val.clear();
@@ -101,6 +121,7 @@ public class ServiceMiseAJour extends IntentService {
 			val.put(DBHelper.C_IMAGE,hm.get("image"));
 			val.put(DBHelper.C_EPOCH_DEBUT,Long.parseLong(hm.get("epoch_debut")));
 			val.put(DBHelper.C_EPOCH_FIN,Long.parseLong(hm.get("epoch_fin")));
+			val.put(DBHelper.C_EPOCH_MODIF,modif);
 			val.put(DBHelper.C_IDS_LIEUX,hm.get("ids_lieux"));
 			val.put(DBHelper.C_IDS_GROUPES,hm.get("ids_groupes"));
 			val.put(DBHelper.C_IDS_CATEGORIES,hm.get("ids_categories"));
@@ -116,7 +137,16 @@ public class ServiceMiseAJour extends IntentService {
 				db.insertOrThrow(DBHelper.TABLE_E, null, val);
 				nb++;
 			} catch ( SQLException e ) {
-				continue; // on va sauter la partie event qui suit, puisqu'on est deja dans la db
+				// deja dans la base de donnee...
+				// on va verifier le epoch_modif de la bd et comparer au notre...
+				// si ce cursor est vide, c'est que la date de modif n'a pas changee
+				Cursor c=db.query(DBHelper.TABLE_E, new String[] {DBHelper.C_ID,DBHelper.C_EPOCH_MODIF} ,
+						"_id="+id+ " and "+DBHelper.C_EPOCH_MODIF+"<"+modif , null, null, null, null);
+				if( c==null ) continue;
+				int count=c.getCount();
+				c.close();
+				if( count==0 ) continue; 
+				// on a trouve quelque chose... on doit donc faire un update sur cet event.
 			}
 			
 			//
@@ -150,6 +180,7 @@ public class ServiceMiseAJour extends IntentService {
 			val.put(DBHelper.C_IMAGE,hm.get("image"));
 			val.put(DBHelper.C_EPOCH_DEBUT,Long.parseLong(hm.get("epoch_debut")));
 			val.put(DBHelper.C_EPOCH_FIN,Long.parseLong(hm.get("epoch_fin")));
+			val.put(DBHelper.C_EPOCH_MODIF,Long.parseLong(hm.get("epoch_modif")));
 			val.put(DBHelper.C_IDS_LIEUX,hm.get("ids_lieux"));
 			val.put(DBHelper.C_IDS_GROUPES,hm.get("ids_groupes"));
 			val.put(DBHelper.C_IDS_CATEGORIES,hm.get("ids_categories"));
@@ -212,7 +243,6 @@ public class ServiceMiseAJour extends IntentService {
 					db.insertOrThrow(DBHelper.TABLE_L, null, val);
 				} catch ( SQLException e ) {}
 			}
-			
 		}
 
 		Log.d(TAG,"added "+nb+" events");
@@ -241,11 +271,9 @@ public class ServiceMiseAJour extends IntentService {
 		else info=nb+(nb>1?" nouveaux évenements.":" nouvel évenement.");
 
 //		// termine en enlevant le "busy" si l'app ecoute ce signal...
-//		in=new Intent("com.seboid.udem.BUSY");
-//		//in.putExtra("busy",false);
-//		in.putExtra("msg",info); // petit message final a afficher
-//		in.putExtra("progress",100); // va enlever le dialogue
-//		sendBroadcast(in);
+		in=new Intent("com.seboid.udem.BUSY");
+		in.putExtra("busy",false);
+		sendBroadcast(in);
 
 		//
 		// Verifions si le broadcastreceiver BUSY est disponible.
@@ -285,25 +313,6 @@ public class ServiceMiseAJour extends IntentService {
 	//
 	// voir http://developer.android.com/guide/topics/ui/notifiers/notifications.html
 	//
-
-	//	private void showNotification(NotificationManager mNM,String msg) {
-	//		// Set the icon, scrolling text and timestamp
-	//				
-	//				new Notification(R.drawable.udem, msg,
-	//				System.currentTimeMillis());
-	//
-	//		// The PendingIntent to launch our activity if the user selects this notification
-	//		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-	//				new Intent(this, ActivityDebug.class), 0);
-	//
-	//		// Set the info for the views that show in the notification panel.
-	//		notification.setLatestEventInfo(this,"UdeM Nouvelles",msg, contentIntent);
-	//
-	//		// Send the notification.
-	//		mNM.notify(R.string.app_name, notification);
-	//	}
-
-
 	private void showNotification(NotificationManager mNM,String msg) {
 		// Set the icon, scrolling text and timestamp		
 
@@ -323,26 +332,7 @@ public class ServiceMiseAJour extends IntentService {
 		// mId allows you to update the notification later on.
 
 		mNotificationManager.notify(R.string.app_name, mBuilder.build());
-
-
 	}
-
-
-	//	  private void scheduleNextUpdate()
-	//	  {
-	//	    Intent intent = new Intent(this, this.getClass());
-	//	    PendingIntent pendingIntent =
-	//	        PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-	//
-	//	    // The update frequency should often be user configurable.  This is not.
-	//
-	//	    long currentTimeMillis = System.currentTimeMillis();
-	//	    long nextUpdateTimeMillis = currentTimeMillis + 20 * DateUtils.MINUTE_IN_MILLIS;
-	//
-	//	    AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-	//	    alarmManager.set(AlarmManager.RTC, nextUpdateTimeMillis, pendingIntent);
-	////	    setInexactRepeating(int type, long triggerAtMillis, long intervalMillis, PendingIntent operation)
-	//	  }
 
 	private boolean networkOK() {		  
 		ConnectivityManager conMgr =  (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);

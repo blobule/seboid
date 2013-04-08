@@ -1,11 +1,16 @@
 package com.seboid.udemcalendrier;
 
+
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -19,11 +24,21 @@ public class ActivityDebug extends Activity implements OnClickListener {
 	Button groupeB;
 	Button lieuxB;
 
+	// busy affichage
+	IntentFilter busyFilter;
+	BusyReceiver busyR;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		getWindow().requestFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
+		getWindow().requestFeature(Window.FEATURE_PROGRESS);
+		
 		setContentView(R.layout.activity_debug);
+
+//		setProgressBarIndeterminateVisibility(true);
+//		setProgressBarVisibility(true);
+//		setProgress(5000);
 		
 		eventsB=(Button)findViewById(R.id.buttonEvents);
 		eventsB.setOnClickListener(this);
@@ -46,8 +61,50 @@ public class ActivityDebug extends Activity implements OnClickListener {
 		lieuxB=(Button)findViewById(R.id.buttonLieux);
 		lieuxB.setOnClickListener(this);
 
+		// le busy receiver
+		busyR=new BusyReceiver();
+		busyFilter=new IntentFilter("com.seboid.udem.BUSY");
 
 	}
+
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		registerReceiver(busyR,busyFilter);
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		unregisterReceiver(busyR);
+	}
+
+	//
+	// un broadcast receiver pour affiche le status "busy"...
+	// on veut afficher busy quand le service travaille...
+	//
+	class BusyReceiver extends BroadcastReceiver {
+
+		@Override
+		public void onReceive(Context ctx, Intent in) {
+			Bundle b=in.getExtras();
+			boolean busy = b.getBoolean("busy");
+			int p = b.getInt("progress",-1); // 0--10000
+
+			if( b.containsKey("busy") ) {
+				setProgressBarIndeterminateVisibility(busy);
+				setProgressBarVisibility(busy);
+			}
+			
+			if( p>0 ) setProgress(p);
+			//Loader<CursorFeedCount> loader=getSupportLoaderManager().getLoader(LOADER_ID);
+			//loader.forceLoad();
+		}		
+	}
+
+
+
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
@@ -65,6 +122,15 @@ public class ActivityDebug extends Activity implements OnClickListener {
 			Toast.makeText(ActivityDebug.this, "service is "+ServiceMiseAJour.class.getName(),Toast.LENGTH_LONG).show();
 			in = new Intent(ActivityDebug.this,ServiceMiseAJour.class);
 			ActivityDebug.this.startService(in);
+//			Calendar cal = Calendar.getInstance();
+//			Intent intent = new Intent(Intent.ACTION_EDIT);
+//			intent.setType("vnd.android.cursor.item/event");
+//			intent.putExtra("beginTime", cal.getTimeInMillis());
+//			intent.putExtra("allDay", false);
+//			intent.putExtra("rrule", "FREQ=DAILY");
+//			intent.putExtra("endTime", cal.getTimeInMillis()+60*60*1000);
+//			intent.putExtra("title", "A Test Event from android app");
+//			startActivity(intent);
 			break;
 		case R.id.buttonEvents:
 //			in = new Intent(this,ActivityDebugEvents.class);
@@ -83,7 +149,7 @@ public class ActivityDebug extends Activity implements OnClickListener {
 
 			in.putExtra("from", from);
 			in.putExtra("to",to);
-			in.putExtra("query","select _id,desc from "+DBHelper.TABLE_C+" order by _id asc");
+			in.putExtra("query","select _id,desc from "+DBHelper.TABLE_C+" order by desc asc");
 			in.putExtra("title","Categories");
 			in.putExtra("layout", R.layout.categories_row);
 			in.putExtra("type",1); // categories
@@ -98,7 +164,7 @@ public class ActivityDebug extends Activity implements OnClickListener {
 
 			in.putExtra("from", from);
 			in.putExtra("to",to);
-			in.putExtra("query","select _id,desc from "+DBHelper.TABLE_SC+" order by _id asc");
+			in.putExtra("query","select _id,desc from "+DBHelper.TABLE_SC+" order by desc asc");
 			in.putExtra("title","Sous-Categories");
 			in.putExtra("layout", R.layout.categories_row);
 			in.putExtra("type",2); // sous-categories
@@ -128,7 +194,7 @@ public class ActivityDebug extends Activity implements OnClickListener {
 
 			in.putExtra("from", from);
 			in.putExtra("to",to);
-			in.putExtra("query","select _id,desc,latitude,longitude from "+DBHelper.TABLE_L+" order by _id asc");
+			in.putExtra("query","select _id,desc,latitude,longitude from "+DBHelper.TABLE_L+" order by desc asc");
 			in.putExtra("title","Lieux");
 			in.putExtra("layout", R.layout.categories_row);
 			in.putExtra("type",/*4*/5); // lieux 4=show events, 5=show map

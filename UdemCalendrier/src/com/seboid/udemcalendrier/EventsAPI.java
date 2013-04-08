@@ -144,6 +144,7 @@ public class EventsAPI {
 		// les heures de depart et fin en long
 		hm.put("epoch_debut", Long.toString(TempsUtil.dateHeure2epoch(hm.get("date"),hm.get("heure_debut"),true)));
 		hm.put("epoch_fin", Long.toString(TempsUtil.dateHeure2epoch(hm.get("date"),hm.get("heure_fin"),false)));
+		hm.put("epoch_modif", Long.toString(TempsUtil.dateHeure2epoch(hm.get("date_modif"))));
 		
 		return hm;
 	}

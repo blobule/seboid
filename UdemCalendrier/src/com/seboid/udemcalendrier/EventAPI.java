@@ -163,25 +163,26 @@ public class EventAPI {
 		// les heures de depart et fin en long
 		base.put("epoch_debut", Long.toString(TempsUtil.dateHeure2epoch(base.get("date"),base.get("heure_debut"),true)));
 		base.put("epoch_fin", Long.toString(TempsUtil.dateHeure2epoch(base.get("date"),base.get("heure_fin"),false)));
+		base.put("epoch_modif", Long.toString(TempsUtil.dateHeure2epoch(base.get("date_modif"))));
 		
 		time=System.currentTimeMillis()-time;
 		
 		// debug output
 		Set<String> ss;
 
-		for( String s : base.keySet() ) Log.d("event","base:"+s+"="+base.get(s));
-		for( HashMap<String,String> hm : lieuList ) {
-			for( String s : hm.keySet() ) Log.d("event","lieu:"+s+"="+hm.get(s));
-		}
-		for( HashMap<String,String> hm : catList ) {
-			for( String s : hm.keySet() ) Log.d("event","cat:"+s+"="+hm.get(s));
-		}
-		for( HashMap<String,String> hm : groupeList ) {
-			for( String s : hm.keySet() ) Log.d("event","groupe:"+s+"="+hm.get(s));
-		}
-		for( HashMap<String,String> hm : souscatList ) {
-			for( String s : hm.keySet() ) Log.d("event","souscat:"+s+"="+hm.get(s));
-		}
+//		for( String s : base.keySet() ) Log.d("event","base:"+s+"="+base.get(s));
+//		for( HashMap<String,String> hm : lieuList ) {
+//			for( String s : hm.keySet() ) Log.d("event","lieu:"+s+"="+hm.get(s));
+//		}
+//		for( HashMap<String,String> hm : catList ) {
+//			for( String s : hm.keySet() ) Log.d("event","cat:"+s+"="+hm.get(s));
+//		}
+//		for( HashMap<String,String> hm : groupeList ) {
+//			for( String s : hm.keySet() ) Log.d("event","groupe:"+s+"="+hm.get(s));
+//		}
+//		for( HashMap<String,String> hm : souscatList ) {
+//			for( String s : hm.keySet() ) Log.d("event","souscat:"+s+"="+hm.get(s));
+//		}
 
 	}
 

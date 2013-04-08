@@ -21,7 +21,7 @@ public class DBHelper extends SQLiteOpenHelper {
 	static final String TAG = "db";
 
 	static final String DB_NAME = "calendrier.db";
-	static final int DB_VERSION = 7;
+	static final int DB_VERSION = 8;
 
 
 	// categories
@@ -72,8 +72,9 @@ public class DBHelper extends SQLiteOpenHelper {
 	static final String C_TYPE_HORAIRE="type_horaire";
 	static final String C_VIGNETTE="vignette";
 	static final String C_IMAGE="image";
-	static final String C_EPOCH_DEBUT="epoch_debut";
-	static final String C_EPOCH_FIN="epoch_fin";
+	static final String C_EPOCH_DEBUT="epoch_debut"; // <-- heure_debut
+	static final String C_EPOCH_FIN="epoch_fin";     // <-- heure_fin
+	static final String C_EPOCH_MODIF="epoch_modif"; // <-- date_modif
 	static final String C_IDS_LIEUX="ids_lieux";
 	static final String C_IDS_GROUPES="ids_groupes";
 	static final String C_IDS_CATEGORIES="ids_categories";
@@ -107,6 +108,7 @@ public class DBHelper extends SQLiteOpenHelper {
 				+C_IMAGE+" text,"
 				+C_EPOCH_DEBUT+" long,"
 				+C_EPOCH_FIN+" long,"
+				+C_EPOCH_MODIF+" long,"
 				+C_IDS_LIEUX+" text,"
 				+C_IDS_GROUPES+" text,"
 				+C_IDS_CATEGORIES+" text,"
@@ -175,5 +177,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
 		db.close();
 	}
+	
+	
 
 }
