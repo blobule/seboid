@@ -86,7 +86,7 @@ public class ServiceRss extends IntentService {
 		
 		for(int j=0;j<feeds.length;j++) {
 
-			past = (long)(System.currentTimeMillis()/1000 - Long.parseLong(preferences.getString("savetime","365"))*24*3600);
+			past = (long)(System.currentTimeMillis()/1000 - Long.parseLong(preferences.getString("savetime","10"))*24*3600);
 
 			String feed=feeds[j][0];
 			String feedExtra=feeds[j][1];

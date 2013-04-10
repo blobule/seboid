@@ -1,8 +1,10 @@
 package com.seboid.udem;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
@@ -10,7 +12,6 @@ import android.database.DatabaseUtils;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
 import android.support.v4.widget.SimpleCursorAdapter;
@@ -268,6 +269,9 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 			//		case R.id.menucat:
 			//			startActivity(new Intent(this, ActivityUdeMListCat.class));
 			//			break;
+		case R.id.menuhelp:
+			instructions();
+			break;
 		}
 		return true;
 	}
@@ -389,6 +393,26 @@ public class ActivityUdeMNouvelles extends FragmentActivity implements
 	}
 
 
-	
+	public void instructions() {
+		AlertDialog.Builder adb = new AlertDialog.Builder(this);
+		adb.setIcon(android.R.drawable.ic_menu_help);
+		adb.setTitle("Liste des nouvelles");
+		adb.setMessage("Une barre jaune à gauche indique qu'un article n'a jamais été lu.");
+		adb.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int id) {
+				// Action for 'Ok' Button
+			}
+		});
+		// adb.setNegativeButton("Cancel", new DialogInterface.OnClickListener()
+		// {
+		// public void onClick(DialogInterface dialog, int id)
+		// {
+		// // Action for 'Cancel' Button
+		// dialog.cancel();
+		// }
+		// });
+		adb.show();
+	}
+
 }
 

@@ -7,10 +7,16 @@
         android:showAsAction="ifRoom"
         android:title="@string/partager">
     </item>
-        <item
+    <item
+        android:id="@+id/menuprefsdetail"
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:showAsAction="never"
+        android:title="@string/preferences">
+    </item>
+    <item
         android:id="@+id/menuhelpdetail"
         android:icon="@android:drawable/ic_menu_help"
-        android:showAsAction="ifRoom"
+        android:showAsAction="never"
         android:title="@string/help">
     </item>
     <!--
@@ -21,6 +27,7 @@
         android:title="@string/favori">
     </item>
     -->
+
 
     <!--
          <item

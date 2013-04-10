@@ -107,7 +107,7 @@ public class ActivityUdeMListFC extends FragmentActivity implements
 
 		// adapter (pour loader)
 		adapter = new MySimpleCursorAdapter(this, R.layout.rowcat, /* extendedCursor */
-				from, to);
+		from, to);
 		lv.setAdapter(adapter);
 
 		// notre activite va fournir les callbacks de ce loader.
@@ -223,6 +223,31 @@ public class ActivityUdeMListFC extends FragmentActivity implements
 
 		// enregistre le receiver pour l'etat busy
 		registerReceiver(busyR, busyFilter);
+
+		//
+		// message (derniers xx jours), provient des preferences
+		//
+		TextView tv = (TextView) findViewById(R.id.derniers_jours);
+		int nbj = Integer.valueOf(preferences.getString("savetime", "10"));
+		if (nbj < 1)
+			nbj = 1; // ne devrait pas servir
+		switch (nbj) {
+		case 1:
+			tv.setText("(derniers 24h)");
+			break;
+		case 2:
+			tv.setText("(derniers 48h)");
+			break;
+		default:
+			tv.setText("(derniers " + nbj + " jours)");
+		}
+	
+		//
+		// reload les datas au cas ou on aurait changer quelques chose...
+		//
+		Loader<CursorFeedCount> loader = getSupportLoaderManager()
+				.getLoader(LOADER_ID);
+		loader.forceLoad();
 	}
 
 	@Override
@@ -654,9 +679,11 @@ public class ActivityUdeMListFC extends FragmentActivity implements
 
 	public void instructions() {
 		AlertDialog.Builder adb = new AlertDialog.Builder(this);
-		adb.setIcon(R.drawable.ic_launcher);
-		adb.setTitle("Liste des nouvelles");
-		adb.setMessage("Une nouvelle qui n'a jamais été lu est marquée en jaune...");
+		adb.setIcon(android.R.drawable.ic_menu_help);
+		adb.setTitle("Sources de nouvelles");
+		adb.setMessage("Vous pouvez lire toutes les nouvelles, ou vous limiter à une seule source (Campus, Sport, ...)"+
+		   " ou à une catégorie.\n\nCochez les sources que vous souhaitez lire.\n\n"+
+				"Les nouvelles sont mises à jour automatiquement.");
 		adb.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
 				// Action for 'Ok' Button
