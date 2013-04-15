@@ -162,7 +162,7 @@ public class ActivityDebugEvent extends FragmentActivity implements
 						+ "; background-color:" + "#000000" + " } a { color:"
 						+ "#8080ff" + "; } h2 { color:" + "#ffffff"
 						+ "; } </style><body>"
-						+ "<img width=\"100%\" src=\""+c.getString(c.getColumnIndex("image"))+"\">"
+						+ "<img width=\"50%\" src=\""+c.getString(c.getColumnIndex("image"))+"\">"
 						+ c.getString(c.getColumnIndex("description"))
 						+ "</body>", "text/html", "utf-8", null);
 	}

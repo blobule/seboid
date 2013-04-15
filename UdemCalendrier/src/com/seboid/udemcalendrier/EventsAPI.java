@@ -80,7 +80,7 @@ public class EventsAPI {
 
 		try {
 			// lire la page web
-			HttpEntity page = getHttp(url);
+			HttpEntity page = NetUtil.getHttp(url);
 
 			// on va filter les <img ... /> parce qu' elles sont base64 et trop grosses
 			myFilterInputStream in=new myFilterInputStream(page.getContent(),"<img","/>");
@@ -151,26 +151,6 @@ public class EventsAPI {
 
 
 
-	//
-	// lire une page web et retourner le contenu
-	//
-	private HttpEntity getHttp(String url) throws ClientProtocolException, IOException 
-	{
-		HttpClient httpClient = new DefaultHttpClient();
-		HttpGet http = new HttpGet(url);
-		HttpResponse response = httpClient.execute(http);
-		return response.getEntity();    		
-	}
-
-
-	//
-	// lire une image avec un URL
-	//
-	private Drawable loadHttpImage(String url) throws ClientProtocolException, IOException {
-		InputStream is = getHttp(url).getContent();
-		Drawable d = Drawable.createFromStream(is, "src");
-		return d;
-	}
 
 
 

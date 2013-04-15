@@ -3,7 +3,6 @@ package com.seboid.udemcalendrier;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.LinkedList;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -42,6 +41,8 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.seboid.udemcalendrier.ImageUtil.ImageLoaderQueue;
+
 //
 // super swiper par jour...
 //
@@ -50,9 +51,8 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 
 	private ViewPager swipePager;
 	private SwipeAdapter swipeAdapter;
-
-	ImageCache imageCache; // link url et image
-	ImageLoaderQueue imageQ;
+	
+	ImageUtil.ImageLoaderQueue imageQ;
 
 	LayoutInflater inflater;
 
@@ -125,8 +125,7 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 		db = dbh.getReadableDatabase();
 
 		// la cache pour les images
-		imageCache = new ImageCache();
-		imageQ = new ImageLoaderQueue();
+		imageQ = new ImageUtil.ImageLoaderQueue();
 		imageQ.start();
 
 	}
@@ -146,17 +145,28 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 	}
 
 	@Override
+	protected void onStart() {
+		super.onStart();
+		imageQ.start();
+	}
+	
+	@Override
 	protected void onResume() {
 		super.onResume();
-		// new DownloadEventsTask().execute();
 	}
 
 	@Override
 	protected void onPause() {
-		// TODO Auto-generated method stub
 		super.onPause();
 	}
 
+	@Override
+	protected void onStop() {
+		imageQ.stop();
+		super.onStop();
+	}
+
+	
 	// @Override
 	// public void onItemClick(AdapterView<?> arg0, View v, int position, long
 	// id) {
@@ -507,22 +517,8 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 						String url = c.getString(colonne);
 						Log.d("binder", "vignette " + url);
 						ImageView iv = (ImageView) v;
-						Bitmap b = imageCache.getBitmap(url);
-						if (b != null)
-							iv.setImageBitmap(b);
-						else {
-							// ajoute directement dans la queue de "a lire"
-							iv.setTag(url); // associe cet url avec cet image
-											// (peut changer si recyclage)
-							imageQ.addTask(iv);
-							// iv.setImageResource(R.drawable.ic_launcher); //
-							// temporaire
-							// // while
-							// // loading
-							// iv.setTag(url); // on va pouvoir detecter le
-							// // recyclage
-							// new ImageLoadTask(iv).execute();
-						}
+						iv.setTag(url); // associe cet url avec cet image
+						imageQ.addTask(iv); // lance le load si necessaire						
 						return true;
 					}
 					return false;
@@ -574,224 +570,7 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 		}
 	}
 
-	//
-	// loader asynchrone d'images...
-	//
-	// on suppose que le tag du ImageView est l'URL a lire.
-	// si le view est recycle, ce n'est pas grave... on laisse tomber.
-	//
-	//
-	//
-	private class ImageLoadTask extends AsyncTask<String, String, Bitmap> {
-		private final ImageView iv;
-		private final String url;
 
-		public ImageLoadTask(ImageView iv) {
-			this.iv = iv;
-			url = (String) iv.getTag();
-		}
-
-		@Override
-		protected void onPreExecute() {
-			if (url != null) {
-				Log.d("asyncimage", "loading " + url);
-			}
-		}
-
-		@Override
-		protected Bitmap doInBackground(String... param) {
-			if (url == null)
-				return null;
-			try {
-				final Bitmap b = loadHttpImage(url);
-				// iv.post(new Runnable() {
-				// public void run() { iv.setImageBitmap(b); };
-				// });
-				return b;
-			} catch (ClientProtocolException e) {
-			} catch (IOException e) {
-			}
-			return null;
-		}
-
-		@Override
-		protected void onPostExecute(Bitmap result) {
-			Log.d("asyncimage", "done loading " + url);
-			if (result == null)
-				return;
-			imageCache.rememberBitMap(url, result); // ne pas reloader 2 fois la
-													// meme image
-			String newurl = (String) iv.getTag();
-			if (newurl.equals(url)) {
-				iv.setImageBitmap(result);
-			} else {
-				Log.d("asyncimage", "recycled");
-			}
-		}
-
-		//
-		// lire une page web et retourner le contenu
-		//
-		private HttpEntity getHttp(String url) throws ClientProtocolException,
-				IOException {
-			HttpClient httpClient = new DefaultHttpClient();
-			HttpGet http = new HttpGet(url);
-			HttpResponse response = httpClient.execute(http);
-			return response.getEntity();
-		}
-
-		//
-		// lire une image avec un URL
-		//
-		private Bitmap loadHttpImage(String url)
-				throws ClientProtocolException, IOException {
-			InputStream is = getHttp(url).getContent();
-			Bitmap b = BitmapFactory.decodeStream(is);
-			// Drawable d = Drawable.createFromStream(is, "src");
-			return b;
-		}
-
-	}
-
-	class ImageLoaderQueue {
-		private LinkedList<ImageView> tasks;
-		private Thread thread;
-		private boolean running;
-		private Runnable internalRunnable;
-
-		// cache d'images
-		private HashMap<String, Bitmap> cache;
-
-		private final String ME = "TaskQueue";
-
-		private class InternalRunnable implements Runnable {
-			public void run() {
-				internalRun();
-			}
-		}
-
-		public ImageLoaderQueue() {
-			tasks = new LinkedList<ImageView>();
-			internalRunnable = new InternalRunnable();
-			cache = new HashMap<String, Bitmap>();
-		}
-
-		public void start() {
-			if (!running) {
-				thread = new Thread(internalRunnable);
-				thread.setDaemon(true);
-				running = true;
-				thread.start();
-			}
-		}
-
-		public void stop() {
-			running = false;
-		}
-
-		// called from UI
-		public void addTask(ImageView iv) {
-			if (iv == null)
-				return;
-			// check cache
-			String url = (String) iv.getTag();
-			if (url == null)
-				return;
-			if (cache.containsKey(url)) {
-				iv.setImageBitmap(cache.get(url));
-				return;
-			}
-			// must load the image...
-			if (!running)
-				start();
-			synchronized (tasks) {
-				tasks.addLast(iv);
-				tasks.notify(); // notify any waiting threads
-			}
-		}
-
-		private ImageView getNextTask() {
-			int s;
-			synchronized (tasks) {
-				s = tasks.size();
-			}
-			Log.d(ME, "getNextTask " + s + " todo");
-			synchronized (tasks) {
-				if (tasks.isEmpty()) {
-					try {
-						tasks.wait();
-					} catch (InterruptedException e) {
-						Log.e(ME, "Task interrupted", e);
-						stop();
-					}
-				}
-				return tasks.removeFirst();
-			}
-		}
-
-		// in thread
-		private void internalRun() {
-			while (running) {
-				final ImageView iv = getNextTask();
-				final String url = (String) iv.getTag();
-				if (url == null)
-					continue;
-				// check cache again
-
-				final Bitmap tmp;
-				synchronized(cache) { tmp=cache.get(url); }
-				if( tmp!=null ) {
-					Log.d(ME, "in cache " + url);
-					iv.post(new Runnable() {
-						public void run() {
-							if (((String) iv.getTag()).equals(url))
-								iv.setImageBitmap(tmp);
-						};
-					});
-					continue;
-				}
-				Log.d(ME, "loading  " + url);
-				try {
-					final Bitmap b = loadHttpImage(url);
-					// update UI thread... only if tag did not change
-					iv.post(new Runnable() {
-						public void run() {
-							if (((String) iv.getTag()).equals(url))
-								iv.setImageBitmap(b);
-						};
-					});
-					// update cache
-					synchronized(cache) {
-						cache.put(url, b);
-					}
-				} catch (ClientProtocolException e) {
-				} catch (IOException e) {
-				}
-			}
-		}
-
-		//
-		// lire une page web et retourner le contenu
-		//
-		private HttpEntity getHttp(String url) throws ClientProtocolException,
-				IOException {
-			HttpClient httpClient = new DefaultHttpClient();
-			HttpGet http = new HttpGet(url);
-			HttpResponse response = httpClient.execute(http);
-			return response.getEntity();
-		}
-
-		//
-		// lire une image avec un URL
-		//
-		private Bitmap loadHttpImage(String url)
-				throws ClientProtocolException, IOException {
-			InputStream is = getHttp(url).getContent();
-			Bitmap b = BitmapFactory.decodeStream(is);
-			// Drawable d = Drawable.createFromStream(is, "src");
-			return b;
-		}
-
-	}
+	
 
 }
