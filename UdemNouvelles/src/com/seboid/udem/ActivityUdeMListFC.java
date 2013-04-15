@@ -125,6 +125,22 @@ public class ActivityUdeMListFC extends FragmentActivity implements
 		busyR = new BusyReceiver();
 		busyFilter = new IntentFilter("com.seboid.udem.BUSY");
 
+		//
+		// la premiere fois qu'on vient ici...
+		//
+		boolean first = preferences.getBoolean("premiere_fois", true);
+		if (first) {
+			prefeditor.putBoolean("premiere_fois", false);
+			for (String i : feedName.keySet()) {
+				Log.d("first", "reset feed " + i);
+				prefeditor.putBoolean(i, true);
+			}
+			prefeditor.apply();
+			// on est abonne a tout! On demarre une mise a jour...
+			startService(new Intent(this, ServiceRss.class));
+			// on affiche un mot d'intro
+			instructions();
+		}
 	}
 
 	public void actionCheck(View v) {
@@ -241,12 +257,12 @@ public class ActivityUdeMListFC extends FragmentActivity implements
 		default:
 			tv.setText("(derniers " + nbj + " jours)");
 		}
-	
+
 		//
 		// reload les datas au cas ou on aurait changer quelques chose...
 		//
-		Loader<CursorFeedCount> loader = getSupportLoaderManager()
-				.getLoader(LOADER_ID);
+		Loader<CursorFeedCount> loader = getSupportLoaderManager().getLoader(
+				LOADER_ID);
 		loader.forceLoad();
 	}
 
@@ -681,9 +697,9 @@ public class ActivityUdeMListFC extends FragmentActivity implements
 		AlertDialog.Builder adb = new AlertDialog.Builder(this);
 		adb.setIcon(android.R.drawable.ic_menu_help);
 		adb.setTitle("Sources de nouvelles");
-		adb.setMessage("Vous pouvez lire toutes les nouvelles, ou vous limiter à une seule source (Campus, Sport, ...)"+
-		   " ou à une catégorie.\n\nCochez les sources que vous souhaitez lire.\n\n"+
-				"Les nouvelles sont mises à jour automatiquement.");
+		adb.setMessage("Vous pouvez lire toutes les nouvelles, ou vous limiter à une seule source (Campus, Sport, ...)"
+				+ " ou à une catégorie.\n\nCochez les sources que vous souhaitez lire.\n\n"
+				+ "Les nouvelles sont mises à jour automatiquement.");
 		adb.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
 				// Action for 'Ok' Button
@@ -700,6 +716,8 @@ public class ActivityUdeMListFC extends FragmentActivity implements
 		adb.show();
 	}
 
+
+	
 }
 
 //

@@ -2,8 +2,8 @@ package com.seboid.udem;
 
 import java.util.HashMap;
 
-import android.app.AlarmManager;
 import android.app.IntentService;
+import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.ContentValues;
@@ -15,8 +15,6 @@ import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
-import android.text.format.DateUtils;
-import android.text.format.Time;
 import android.util.Log;
 
 //
@@ -211,6 +209,9 @@ public class ServiceRss extends IntentService {
 		if( nb==0 ) info="Aucun nouveau message.";
 		else info=nb+(nb>1?" nouveaux messages.":" nouveau message.");
 		
+		Class<?> go=ActivityUdeMListFC.class;
+		if( nb<10 ) go=ActivityUdeMNouvelles.class;
+		
 		// termine en enlevant le "busy" si l'app ecoute ce signal...
 		in=new Intent("com.seboid.udem.BUSY");
 		//in.putExtra("busy",false);
@@ -222,7 +223,7 @@ public class ServiceRss extends IntentService {
 		// Verifions si le broadcastreceiver BUSY est disponible.
 		// Si c'est le cas, on va faire un toast plutot qu'une notification
 		//
-		showNotification(mNM,info);
+		showNotification(mNM,info,go);
 		
 		//scheduleNextUpdate();
 	}
@@ -275,7 +276,7 @@ public class ServiceRss extends IntentService {
 	//	}
 
 
-	private void showNotification(NotificationManager mNM,String msg) {
+	private void showNotification(NotificationManager mNM,String msg,Class<?> go) {
 		// Set the icon, scrolling text and timestamp		
 
 		NotificationCompat.Builder mBuilder =
@@ -283,21 +284,35 @@ public class ServiceRss extends IntentService {
 		mBuilder.setSmallIcon(R.drawable.ic_launcher);
 		mBuilder.setContentTitle("UdeM | Nouvelles");
 		mBuilder.setContentText(msg);
+		//mBuilder.setLights(0xff0000ff, 1000, 1000);
 
 		// The PendingIntent to launch our activity if the user selects this notification
 		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
-				new Intent(this, ActivityUdeMNouvelles.class), 0);
-
+				new Intent(this, go), 0);
 		mBuilder.setContentIntent(contentIntent);
+		
+		Notification notif = mBuilder.build();
+//		notif.ledARGB=0xff0000ff;
+		
 		NotificationManager mNotificationManager =
 				(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		// mId allows you to update the notification later on.
 
-		mNotificationManager.notify(R.string.app_name, mBuilder.build());
+		mNotificationManager.notify(R.string.app_name, notif);
 
-
+        RedFlashLight();
 	}
 
+	 private void RedFlashLight()
+	    {
+	    NotificationManager nm = ( NotificationManager ) getSystemService( NOTIFICATION_SERVICE );
+	    Notification notif = new Notification();
+	    notif.ledARGB = 0xFFffff00;
+	    notif.flags = Notification.FLAG_SHOW_LIGHTS;
+	    notif.ledOnMS = 100; 
+	    notif.ledOffMS = 100; 
+	    nm.notify(112233, notif);
+	    }
 	
 //	  private void scheduleNextUpdate()
 //	  {
