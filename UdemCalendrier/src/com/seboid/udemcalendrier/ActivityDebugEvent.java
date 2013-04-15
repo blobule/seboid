@@ -23,6 +23,10 @@ import android.widget.AdapterView.OnItemClickListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
+//
+// Affiche un seul evenement
+//
+
 public class ActivityDebugEvent extends FragmentActivity implements
 		OnItemClickListener, LoaderManager.LoaderCallbacks<Cursor> {
 
@@ -158,6 +162,7 @@ public class ActivityDebugEvent extends FragmentActivity implements
 						+ "; background-color:" + "#000000" + " } a { color:"
 						+ "#8080ff" + "; } h2 { color:" + "#ffffff"
 						+ "; } </style><body>"
+						+ "<img width=\"100%\" src=\""+c.getString(c.getColumnIndex("image"))+"\">"
 						+ c.getString(c.getColumnIndex("description"))
 						+ "</body>", "text/html", "utf-8", null);
 	}
@@ -243,7 +248,8 @@ public class ActivityDebugEvent extends FragmentActivity implements
 					+DBHelper.C_DATE+","
 					+DBHelper.C_HEURE_DEBUT+","
 					+DBHelper.C_HEURE_FIN+","
-					+DBHelper.C_DESCRIPTION
+					+DBHelper.C_DESCRIPTION+","
+					+DBHelper.C_IMAGE
 					+" from " + DBHelper.TABLE_E + " where _id=" + id;
 
 			Cursor c = db.rawQuery(query, null);

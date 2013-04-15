@@ -1,13 +1,25 @@
 package com.seboid.udemcalendrier;
 
-import android.content.ContentValues;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.LinkedList;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+
 import android.content.Context;
 import android.content.Intent;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
@@ -16,21 +28,19 @@ import android.support.v4.content.Loader;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SimpleCursorAdapter;
+import android.support.v4.widget.SimpleCursorAdapter.ViewBinder;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 //
 // super swiper par jour...
@@ -41,16 +51,19 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 	private ViewPager swipePager;
 	private SwipeAdapter swipeAdapter;
 
+	ImageCache imageCache; // link url et image
+	ImageLoaderQueue imageQ;
+
 	LayoutInflater inflater;
 
 	// ListView listv;
 	// SimpleCursorAdapter adapter;
 
 	// arrive directement de Extra dans l'intent
-	final String[] fromRef = { "_id", "titre", "date" };
-	final int[] toRef = { R.id.text3, R.id.text1, R.id.text2 };
-	final String queryRef = "select _id,titre,date from " + DBHelper.TABLE_E
-			+ " order by date asc";
+	final String[] fromRef = { "_id", "titre", "date", "vignette" };
+	final int[] toRef = { R.id.text3, R.id.text1, R.id.text2, R.id.vignette };
+	final String queryRef = "select _id,titre,date,vignette from "
+			+ DBHelper.TABLE_E + " order by date asc";
 	final String titleRef = "Events";
 
 	String[] from;
@@ -110,6 +123,11 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 
 		dbh = new DBHelper(this);
 		db = dbh.getReadableDatabase();
+
+		// la cache pour les images
+		imageCache = new ImageCache();
+		imageQ = new ImageLoaderQueue();
+		imageQ.start();
 
 	}
 
@@ -210,13 +228,15 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 		DBHelper dbh;
 		SQLiteDatabase db;
 		String query_where;
+		String[] query_from;
 
-		public myASyncLoader(Context context, String query_where,
-				SQLiteDatabase db) {
+		public myASyncLoader(Context context, String[] query_from,
+				String query_where, SQLiteDatabase db) {
 			super(context);
 			mObserver = new ForceLoadContentObserver();
 			this.db = db;
 			this.query_where = query_where;
+			this.query_from = query_from;
 			c = null;
 		}
 
@@ -272,8 +292,8 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 
 			// le query devrait etre passe en parametre...
 			// Cursor c=db.rawQuery(query, null);
-			String[] query_columns = { "_id", "titre", "date" };
-			Cursor c = db.query(DBHelper.TABLE_E, query_columns, query_where,
+			// String[] query_columns = { "_id", "titre", "date", "vignette" };
+			Cursor c = db.query(DBHelper.TABLE_E, query_from, query_where,
 					null, null, null, "date asc");
 			if (c != null) {
 				// Ensure the cursor window is filled
@@ -398,7 +418,8 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 			// le loader id est la position
 			getSupportLoaderManager()
 					.initLoader(
-							position,
+							position, // le id est la position dans la liste des
+										// jours
 							null,
 							(android.support.v4.app.LoaderManager.LoaderCallbacks<Cursor>) this);
 
@@ -467,7 +488,8 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 																	// d'aujourd'hui
 			String where = DBHelper.C_EPOCH_DEBUT + ">" + time_start + " and "
 					+ DBHelper.C_EPOCH_DEBUT + "<" + time_end;
-			return new myASyncLoader(ActivityDebugEventsSwipe.this, where, db);
+			return new myASyncLoader(ActivityDebugEventsSwipe.this, from,
+					where, db);
 		}
 
 		@Override
@@ -475,6 +497,37 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 			// les deux infos fraichement loadees
 			int pos = loader.getId();
 			adapter[pos].swapCursor(c);
+			// on veut controler l'affichage des rangee...
+			adapter[pos].setViewBinder(new ViewBinder() {
+				@Override
+				public boolean setViewValue(View v, Cursor c, int colonne) {
+					// Log.d("binder",
+					// "col "+colonne+":"+c.getColumnIndex("vignette"));
+					if (colonne == c.getColumnIndex("vignette")) {
+						String url = c.getString(colonne);
+						Log.d("binder", "vignette " + url);
+						ImageView iv = (ImageView) v;
+						Bitmap b = imageCache.getBitmap(url);
+						if (b != null)
+							iv.setImageBitmap(b);
+						else {
+							// ajoute directement dans la queue de "a lire"
+							iv.setTag(url); // associe cet url avec cet image
+											// (peut changer si recyclage)
+							imageQ.addTask(iv);
+							// iv.setImageResource(R.drawable.ic_launcher); //
+							// temporaire
+							// // while
+							// // loading
+							// iv.setTag(url); // on va pouvoir detecter le
+							// // recyclage
+							// new ImageLoadTask(iv).execute();
+						}
+						return true;
+					}
+					return false;
+				}
+			});
 		}
 
 		@Override
@@ -489,11 +542,254 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 		//
 
 		@Override
-		public void onItemClick(AdapterView<?> adapter, View v, int position, long id) {
-			Intent in = new Intent(getApplicationContext(), ActivityDebugEvent.class);
+		public void onItemClick(AdapterView<?> adapter, View v, int position,
+				long id) {
+			Intent in = new Intent(getApplicationContext(),
+					ActivityDebugEvent.class);
 			// le view doit avoir un tag qui contient le id...
 			in.putExtra("id", (int) id);
 			startActivity(in);
+		}
+
+	}
+
+	//
+	// cache pour les icones
+	//
+	public class ImageCache {
+		private HashMap<String, Bitmap> hm;
+
+		public ImageCache() {
+			hm = new HashMap<String, Bitmap>();
+		}
+
+		// return null si pas d'image en cache
+		public Bitmap getBitmap(String url) {
+			return hm.get(url);
+		}
+
+		public void rememberBitMap(String url, Bitmap b) {
+			hm.put(url, b);
+			Log.d("cache", "nb images = " + hm.size());
+		}
+	}
+
+	//
+	// loader asynchrone d'images...
+	//
+	// on suppose que le tag du ImageView est l'URL a lire.
+	// si le view est recycle, ce n'est pas grave... on laisse tomber.
+	//
+	//
+	//
+	private class ImageLoadTask extends AsyncTask<String, String, Bitmap> {
+		private final ImageView iv;
+		private final String url;
+
+		public ImageLoadTask(ImageView iv) {
+			this.iv = iv;
+			url = (String) iv.getTag();
+		}
+
+		@Override
+		protected void onPreExecute() {
+			if (url != null) {
+				Log.d("asyncimage", "loading " + url);
+			}
+		}
+
+		@Override
+		protected Bitmap doInBackground(String... param) {
+			if (url == null)
+				return null;
+			try {
+				final Bitmap b = loadHttpImage(url);
+				// iv.post(new Runnable() {
+				// public void run() { iv.setImageBitmap(b); };
+				// });
+				return b;
+			} catch (ClientProtocolException e) {
+			} catch (IOException e) {
+			}
+			return null;
+		}
+
+		@Override
+		protected void onPostExecute(Bitmap result) {
+			Log.d("asyncimage", "done loading " + url);
+			if (result == null)
+				return;
+			imageCache.rememberBitMap(url, result); // ne pas reloader 2 fois la
+													// meme image
+			String newurl = (String) iv.getTag();
+			if (newurl.equals(url)) {
+				iv.setImageBitmap(result);
+			} else {
+				Log.d("asyncimage", "recycled");
+			}
+		}
+
+		//
+		// lire une page web et retourner le contenu
+		//
+		private HttpEntity getHttp(String url) throws ClientProtocolException,
+				IOException {
+			HttpClient httpClient = new DefaultHttpClient();
+			HttpGet http = new HttpGet(url);
+			HttpResponse response = httpClient.execute(http);
+			return response.getEntity();
+		}
+
+		//
+		// lire une image avec un URL
+		//
+		private Bitmap loadHttpImage(String url)
+				throws ClientProtocolException, IOException {
+			InputStream is = getHttp(url).getContent();
+			Bitmap b = BitmapFactory.decodeStream(is);
+			// Drawable d = Drawable.createFromStream(is, "src");
+			return b;
+		}
+
+	}
+
+	class ImageLoaderQueue {
+		private LinkedList<ImageView> tasks;
+		private Thread thread;
+		private boolean running;
+		private Runnable internalRunnable;
+
+		// cache d'images
+		private HashMap<String, Bitmap> cache;
+
+		private final String ME = "TaskQueue";
+
+		private class InternalRunnable implements Runnable {
+			public void run() {
+				internalRun();
+			}
+		}
+
+		public ImageLoaderQueue() {
+			tasks = new LinkedList<ImageView>();
+			internalRunnable = new InternalRunnable();
+			cache = new HashMap<String, Bitmap>();
+		}
+
+		public void start() {
+			if (!running) {
+				thread = new Thread(internalRunnable);
+				thread.setDaemon(true);
+				running = true;
+				thread.start();
+			}
+		}
+
+		public void stop() {
+			running = false;
+		}
+
+		// called from UI
+		public void addTask(ImageView iv) {
+			if (iv == null)
+				return;
+			// check cache
+			String url = (String) iv.getTag();
+			if (url == null)
+				return;
+			if (cache.containsKey(url)) {
+				iv.setImageBitmap(cache.get(url));
+				return;
+			}
+			// must load the image...
+			if (!running)
+				start();
+			synchronized (tasks) {
+				tasks.addLast(iv);
+				tasks.notify(); // notify any waiting threads
+			}
+		}
+
+		private ImageView getNextTask() {
+			int s;
+			synchronized (tasks) {
+				s = tasks.size();
+			}
+			Log.d(ME, "getNextTask " + s + " todo");
+			synchronized (tasks) {
+				if (tasks.isEmpty()) {
+					try {
+						tasks.wait();
+					} catch (InterruptedException e) {
+						Log.e(ME, "Task interrupted", e);
+						stop();
+					}
+				}
+				return tasks.removeFirst();
+			}
+		}
+
+		// in thread
+		private void internalRun() {
+			while (running) {
+				final ImageView iv = getNextTask();
+				final String url = (String) iv.getTag();
+				if (url == null)
+					continue;
+				// check cache again
+
+				final Bitmap tmp;
+				synchronized(cache) { tmp=cache.get(url); }
+				if( tmp!=null ) {
+					Log.d(ME, "in cache " + url);
+					iv.post(new Runnable() {
+						public void run() {
+							if (((String) iv.getTag()).equals(url))
+								iv.setImageBitmap(tmp);
+						};
+					});
+					continue;
+				}
+				Log.d(ME, "loading  " + url);
+				try {
+					final Bitmap b = loadHttpImage(url);
+					// update UI thread... only if tag did not change
+					iv.post(new Runnable() {
+						public void run() {
+							if (((String) iv.getTag()).equals(url))
+								iv.setImageBitmap(b);
+						};
+					});
+					// update cache
+					synchronized(cache) {
+						cache.put(url, b);
+					}
+				} catch (ClientProtocolException e) {
+				} catch (IOException e) {
+				}
+			}
+		}
+
+		//
+		// lire une page web et retourner le contenu
+		//
+		private HttpEntity getHttp(String url) throws ClientProtocolException,
+				IOException {
+			HttpClient httpClient = new DefaultHttpClient();
+			HttpGet http = new HttpGet(url);
+			HttpResponse response = httpClient.execute(http);
+			return response.getEntity();
+		}
+
+		//
+		// lire une image avec un URL
+		//
+		private Bitmap loadHttpImage(String url)
+				throws ClientProtocolException, IOException {
+			InputStream is = getHttp(url).getContent();
+			Bitmap b = BitmapFactory.decodeStream(is);
+			// Drawable d = Drawable.createFromStream(is, "src");
+			return b;
 		}
 
 	}

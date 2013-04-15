@@ -237,8 +237,10 @@ public class ServiceMiseAJour extends IntentService {
 				val.put(DBHelper.C_L_PROVINCE,hm.get("province"));
 				val.put(DBHelper.C_L_PAYS,hm.get("pays"));
 				val.put(DBHelper.C_L_CODEPOSTAL,hm.get("code_postal"));
+				try {
 				val.put(DBHelper.C_L_LATITUDE,Double.parseDouble(hm.get("latitude")));
 				val.put(DBHelper.C_L_LONGITUDE,Double.parseDouble(hm.get("longitude")));
+				} catch ( NumberFormatException e ) { }; // un null probablement
 				try {
 					db.insertOrThrow(DBHelper.TABLE_L, null, val);
 				} catch ( SQLException e ) {}

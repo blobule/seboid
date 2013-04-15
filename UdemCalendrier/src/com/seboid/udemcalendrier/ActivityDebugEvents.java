@@ -2,6 +2,8 @@ package com.seboid.udemcalendrier;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -141,6 +143,7 @@ LoaderManager.LoaderCallbacks<Cursor> {
 			in.putExtra("query","select _id,titre,date from "+DBHelper.TABLE_E+" where ids_lieux like '%:"+id+":%' order by date asc");
 			startActivity(in);
 		}else if( type==5 ) {
+			if( isGoogleMapsInstalled() ) {
 			Cursor c=adapter.getCursor();
 			c.moveToPosition(position);
 			double lat=c.getDouble(2);
@@ -151,6 +154,9 @@ LoaderManager.LoaderCallbacks<Cursor> {
 
 			Intent intent = new Intent(Intent.ACTION_VIEW, uri);
 			startActivity(intent);
+			}else{
+				Toast.makeText(this, "Pas de google map api!",Toast.LENGTH_LONG).show();
+			}
 		}
 	}
 
@@ -345,6 +351,19 @@ LoaderManager.LoaderCallbacks<Cursor> {
 
 	}
 
+
+	public boolean isGoogleMapsInstalled()
+	{
+	    try
+	    {
+	        ApplicationInfo info = getPackageManager().getApplicationInfo("com.google.android.apps.maps", 0 );
+	        return true;
+	    } 
+	    catch(PackageManager.NameNotFoundException e)
+	    {
+	        return false;
+	    }
+	}
 
 
 
