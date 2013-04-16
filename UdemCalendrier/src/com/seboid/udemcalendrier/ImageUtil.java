@@ -1,6 +1,5 @@
 package com.seboid.udemcalendrier;
 
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -9,10 +8,8 @@ import org.apache.http.client.ClientProtocolException;
 
 import android.graphics.Bitmap;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
-
-
-
 
 public class ImageUtil {
 
@@ -23,27 +20,29 @@ public class ImageUtil {
 	//
 	// - un seul thread fait le travail
 	// - un imageview doit avoir un tag avec son url associe
-	// - si l'image view est recycle, ce n'est pas grave... le tage change et c'est tout
+	// - si l'image view est recycle, ce n'est pas grave... le tage change et
+	// c'est tout
 	// - gere une cache
 	//
 	// -- pour utiliser --
 	//
 	// dans le thread principal:
-	//   ImageUtil.ImageLoaderQueue ilq = new ImageLoaderQueue();
-	//   ilq.start();
+	// ImageUtil.ImageLoaderQueue ilq = new ImageLoaderQueue();
+	// ilq.start();
 	//
 	// dans le bindview ou on a un imageview iv et un url a lire...
-	//   iv.setTag(url); // associe cet url avec cet image
-	//   imageQ.addTask(iv); // lance le load si necessaire			
+	// iv.setTag(url); // associe cet url avec cet image
+	// imageQ.addTask(iv); // lance le load si necessaire
 	//
 	// Pour arreter la tache: stop()
 	//
-	
+
 	public static class ImageLoaderQueue {
 		private LinkedList<ImageView> tasks;
 		private Thread thread;
 		private boolean running;
 		private Runnable internalRunnable;
+		private Bitmap defaultBM;
 
 		// cache d'images
 		private HashMap<String, Bitmap> cache;
@@ -57,9 +56,15 @@ public class ImageUtil {
 		}
 
 		public ImageLoaderQueue() {
+			this(null);
+		}
+
+		public ImageLoaderQueue(Bitmap defaultBM) {
 			tasks = new LinkedList<ImageView>();
 			internalRunnable = new InternalRunnable();
 			cache = new HashMap<String, Bitmap>();
+
+			this.defaultBM = defaultBM;
 		}
 
 		// demarre le thread interne
@@ -83,12 +88,18 @@ public class ImageUtil {
 		public void addTask(ImageView iv) {
 			if (iv == null)
 				return;
+			iv.setVisibility(View.INVISIBLE);
 			// check cache
 			String url = (String) iv.getTag();
 			if (url == null)
 				return;
-			if (cache.containsKey(url)) {
-				iv.setImageBitmap(cache.get(url));
+			Bitmap b;
+			synchronized (cache) {
+				b = cache.get(url);
+			}
+			if (b != null) {
+				iv.setImageBitmap(b);
+				iv.setVisibility(View.VISIBLE);
 				return;
 			}
 			// must load the image...
@@ -107,8 +118,10 @@ public class ImageUtil {
 				s = tasks.size();
 			}
 			int cs;
-			synchronized(cache) { cs=cache.size(); }
-			Log.d(ME, "getNextTask " + s + " todo, cache size is "+cs);
+			synchronized (cache) {
+				cs = cache.size();
+			}
+			// Log.d(ME, "getNextTask " + s + " todo, cache size is " + cs);
 			synchronized (tasks) {
 				if (tasks.isEmpty()) {
 					try {
@@ -132,13 +145,17 @@ public class ImageUtil {
 				// check cache again
 
 				final Bitmap tmp;
-				synchronized(cache) { tmp=cache.get(url); }
-				if( tmp!=null ) {
-					Log.d(ME, "in cache " + url);
+				synchronized (cache) {
+					tmp = cache.get(url);
+				}
+				if (tmp != null) {
+					// Log.d(ME, "in cache " + url);
+					// update the view
 					iv.post(new Runnable() {
 						public void run() {
 							if (((String) iv.getTag()).equals(url))
 								iv.setImageBitmap(tmp);
+							iv.setVisibility(View.VISIBLE);
 						};
 					});
 					continue;
@@ -151,75 +168,86 @@ public class ImageUtil {
 						public void run() {
 							if (((String) iv.getTag()).equals(url))
 								iv.setImageBitmap(b);
+							iv.setVisibility(View.VISIBLE);
 						};
 					});
 					// update cache
-					synchronized(cache) {
+					synchronized (cache) {
 						cache.put(url, b);
 					}
-				} catch (ClientProtocolException e) {
-				} catch (IOException e) {
+					// } catch (ClientProtocolException e) {
+					// } catch (IOException e) {
+					// } catch (IllegalStateException e) {
+				} catch (Exception e) {
+					// si on a un bitap par defaut, sinon on laisse invisible
+					if (defaultBM != null) {
+						iv.post(new Runnable() {
+							public void run() {
+								iv.setImageBitmap(defaultBM);
+								iv.setVisibility(View.VISIBLE);
+							};
+						});
+					}
 				}
 			}
 		}
 	}
-	
-//	//
-//	// loader asynchrone d'images...
-//	//
-//	// on suppose que le tag du ImageView est l'URL a lire.
-//	// si le view est recycle, ce n'est pas grave... on laisse tomber.
-//	//
-//	//
-//	//
-//	private class ImageLoadTask extends AsyncTask<String, String, Bitmap> {
-//		private final ImageView iv;
-//		private final String url;
-//
-//		public ImageLoadTask(ImageView iv) {
-//			this.iv = iv;
-//			url = (String) iv.getTag();
-//		}
-//
-//		@Override
-//		protected void onPreExecute() {
-//			if (url != null) {
-//				Log.d("asyncimage", "loading " + url);
-//			}
-//		}
-//
-//		@Override
-//		protected Bitmap doInBackground(String... param) {
-//			if (url == null)
-//				return null;
-//			try {
-//				final Bitmap b = loadHttpImage(url);
-//				// iv.post(new Runnable() {
-//				// public void run() { iv.setImageBitmap(b); };
-//				// });
-//				return b;
-//			} catch (ClientProtocolException e) {
-//			} catch (IOException e) {
-//			}
-//			return null;
-//		}
-//
-//		@Override
-//		protected void onPostExecute(Bitmap result) {
-//			Log.d("asyncimage", "done loading " + url);
-//			if (result == null)
-//				return;
-//			imageCache.rememberBitMap(url, result); // ne pas reloader 2 fois la
-//													// meme image
-//			String newurl = (String) iv.getTag();
-//			if (newurl.equals(url)) {
-//				iv.setImageBitmap(result);
-//			} else {
-//				Log.d("asyncimage", "recycled");
-//			}
-//		}
-//
-//	}
 
-	
+	// //
+	// // loader asynchrone d'images...
+	// //
+	// // on suppose que le tag du ImageView est l'URL a lire.
+	// // si le view est recycle, ce n'est pas grave... on laisse tomber.
+	// //
+	// //
+	// //
+	// private class ImageLoadTask extends AsyncTask<String, String, Bitmap> {
+	// private final ImageView iv;
+	// private final String url;
+	//
+	// public ImageLoadTask(ImageView iv) {
+	// this.iv = iv;
+	// url = (String) iv.getTag();
+	// }
+	//
+	// @Override
+	// protected void onPreExecute() {
+	// if (url != null) {
+	// Log.d("asyncimage", "loading " + url);
+	// }
+	// }
+	//
+	// @Override
+	// protected Bitmap doInBackground(String... param) {
+	// if (url == null)
+	// return null;
+	// try {
+	// final Bitmap b = loadHttpImage(url);
+	// // iv.post(new Runnable() {
+	// // public void run() { iv.setImageBitmap(b); };
+	// // });
+	// return b;
+	// } catch (ClientProtocolException e) {
+	// } catch (IOException e) {
+	// }
+	// return null;
+	// }
+	//
+	// @Override
+	// protected void onPostExecute(Bitmap result) {
+	// Log.d("asyncimage", "done loading " + url);
+	// if (result == null)
+	// return;
+	// imageCache.rememberBitMap(url, result); // ne pas reloader 2 fois la
+	// // meme image
+	// String newurl = (String) iv.getTag();
+	// if (newurl.equals(url)) {
+	// iv.setImageBitmap(result);
+	// } else {
+	// Log.d("asyncimage", "recycled");
+	// }
+	// }
+	//
+	// }
+
 }

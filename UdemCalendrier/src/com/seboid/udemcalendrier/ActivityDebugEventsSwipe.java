@@ -125,6 +125,8 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 		db = dbh.getReadableDatabase();
 
 		// la cache pour les images
+//		Bitmap defaultBM = BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher);
+//		imageQ = new ImageUtil.ImageLoaderQueue(defaultBM);
 		imageQ = new ImageUtil.ImageLoaderQueue();
 		imageQ.start();
 

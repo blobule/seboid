@@ -115,6 +115,8 @@ public class EventAPI {
 			erreur="erreur http(protocol):"+e.getMessage();
 		} catch (IOException e) {
 			erreur="erreur http(IO):"+e.getMessage();
+		} catch (IllegalStateException e) {
+			erreur="erreur http(State):"+e.getMessage();
 		} catch (ParseException e) {
 			erreur="erreur JSON(parse):"+e.getMessage();
 		}

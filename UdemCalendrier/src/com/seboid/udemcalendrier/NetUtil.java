@@ -18,9 +18,10 @@ public class NetUtil {
 
 	//
 	// lire une page web et retourner le contenu
+	// IllegalStateException -> url mal forme...
 	//
 	public static HttpEntity getHttp(String url)
-			throws ClientProtocolException, IOException {
+			throws ClientProtocolException, IOException, IllegalStateException {
 		HttpClient httpClient = new DefaultHttpClient();
 		HttpGet http = new HttpGet(url);
 		HttpResponse response = httpClient.execute(http);
@@ -31,7 +32,7 @@ public class NetUtil {
 	// lire une image avec un URL
 	//
 	public static Bitmap loadHttpImage(String url)
-			throws ClientProtocolException, IOException {
+			throws ClientProtocolException, IOException, IllegalStateException {
 		InputStream is = getHttp(url).getContent();
 		Bitmap b = BitmapFactory.decodeStream(is);
 		// Drawable d = Drawable.createFromStream(is, "src");
@@ -42,7 +43,7 @@ public class NetUtil {
 	// lire une image avec un URL
 	//
 	public static Drawable loadHttpImageDrawable(String url)
-			throws ClientProtocolException, IOException {
+			throws ClientProtocolException, IOException, IllegalStateException {
 		InputStream is = getHttp(url).getContent();
 		Drawable d = Drawable.createFromStream(is, "src");
 		return d;
