@@ -160,7 +160,7 @@ public class ImageUtil {
 					});
 					continue;
 				}
-				Log.d(ME, "loading  " + url);
+				//Log.d(ME, "loading  " + url);
 				try {
 					final Bitmap b = NetUtil.loadHttpImage(url);
 					// update UI thread... only if tag did not change

@@ -1,15 +1,6 @@
 package com.seboid.udemcalendrier;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.content.Context;
 import android.content.Intent;
@@ -17,8 +8,6 @@ import android.database.ContentObserver;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.LoaderManager;
@@ -31,6 +20,7 @@ import android.support.v4.widget.SimpleCursorAdapter.ViewBinder;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -41,9 +31,6 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.seboid.udemcalendrier.ImageUtil.ImageLoaderQueue;
-
-//
 // super swiper par jour...
 //
 
@@ -62,8 +49,8 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 	// arrive directement de Extra dans l'intent
 	final String[] fromRef = { "_id", "titre", "date", "vignette" };
 	final int[] toRef = { R.id.text3, R.id.text1, R.id.text2, R.id.vignette };
-	final String queryRef = "select _id,titre,date,vignette from "
-			+ DBHelper.TABLE_E + " order by date asc";
+	final String queryRef = "select _id,titre,date,vignette,epoch_debut from "
+			+ DBHelper.TABLE_E + " order by epoch_debut asc";
 	final String titleRef = "Events";
 
 	String[] from;
@@ -142,7 +129,17 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// Inflate the menu; this adds items to the action bar if it is present.
-		getMenuInflater().inflate(R.menu.main, menu);
+		getMenuInflater().inflate(R.menu.event, menu);
+		return true;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+//		case R.id.menuhelp:
+//			instructions();
+//			break;
+		}
 		return true;
 	}
 
@@ -306,7 +303,7 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 			// Cursor c=db.rawQuery(query, null);
 			// String[] query_columns = { "_id", "titre", "date", "vignette" };
 			Cursor c = db.query(DBHelper.TABLE_E, query_from, query_where,
-					null, null, null, "date asc");
+					null, null, null, "epoch_debut asc");
 			if (c != null) {
 				// Ensure the cursor window is filled
 				c.getCount();
@@ -491,14 +488,10 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 		@Override
 		public Loader<Cursor> onCreateLoader(int loaderId, Bundle b) {
 			long time_start = TempsUtil.aujourdhuiMilli() + loaderId * 24
-					* 3600 * 1000; // loaderid est le nb de jour a partir
-									// d'aujourd'hui
-			long time_end = time_start + 24 * 3600 * 1000 - 1000; // loaderid
-																	// est le nb
-																	// de jour a
-																	// partir
-																	// d'aujourd'hui
-			String where = DBHelper.C_EPOCH_DEBUT + ">" + time_start + " and "
+					* 3600 * 1000; // loaderid est le nb de jour a partir d'aujourd'hui
+			long time_end = time_start + 24 * 3600 * 1000; // limite = demain
+			Log.d("events","selecting from >="+time_start+" to <"+time_end);
+			String where = DBHelper.C_EPOCH_DEBUT + ">=" + time_start + " and "
 					+ DBHelper.C_EPOCH_DEBUT + "<" + time_end;
 			return new myASyncLoader(ActivityDebugEventsSwipe.this, from,
 					where, db);
@@ -517,7 +510,7 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 					// "col "+colonne+":"+c.getColumnIndex("vignette"));
 					if (colonne == c.getColumnIndex("vignette")) {
 						String url = c.getString(colonne);
-						Log.d("binder", "vignette " + url);
+						//Log.d("binder", "vignette " + url);
 						ImageView iv = (ImageView) v;
 						iv.setTag(url); // associe cet url avec cet image
 						imageQ.addTask(iv); // lance le load si necessaire						
@@ -543,7 +536,7 @@ public class ActivityDebugEventsSwipe extends FragmentActivity {
 		public void onItemClick(AdapterView<?> adapter, View v, int position,
 				long id) {
 			Intent in = new Intent(getApplicationContext(),
-					ActivityDebugEvent.class);
+					ActivityDebugEventSwipe.class);
 			// le view doit avoir un tag qui contient le id...
 			in.putExtra("id", (int) id);
 			startActivity(in);
