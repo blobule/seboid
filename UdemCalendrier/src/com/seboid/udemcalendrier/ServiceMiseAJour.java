@@ -12,10 +12,11 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
-import android.net.ConnectivityManager;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.widget.Toast;
 
 //
 // ce service va chercher les events
@@ -27,12 +28,19 @@ public class ServiceMiseAJour extends IntentService {
 
 	//public static final String NEW_STATUS_INTENT="com.seboid.udem.newstatus";
 
+	Handler mHandler; // pour afficher des toast a partir du handleintent qui est dans un autre thread
+
 	static final String TAG="service";
 
 	public ServiceMiseAJour() {
 		super(TAG); // important
 	}
 
+	@Override
+	public void onCreate() {
+		super.onCreate();
+		mHandler=new Handler();
+	}	
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -41,11 +49,20 @@ public class ServiceMiseAJour extends IntentService {
 	}
 
 
+	// onHandleIntent tourne dans un autre thread....
 	@Override
 	public void onHandleIntent(Intent intent) {
 		Log.d(TAG,"onHandle!");
 
-		if( !networkOK() ) return;
+		if( !NetUtil.networkOK(this.getApplicationContext()) ) {
+			 mHandler.post(new Runnable() {            
+			        @Override
+			        public void run() {
+			            Toast.makeText(ServiceMiseAJour.this,"Pas d'accès au réseau", Toast.LENGTH_LONG).show();                
+			        }
+			    });
+			return;
+		}
 		
 		// commence par demander un "busy" si l'app ecoute ce signal...
 		Intent in=new Intent("com.seboid.udem.BUSY");
@@ -335,16 +352,6 @@ public class ServiceMiseAJour extends IntentService {
 
 		mNotificationManager.notify(R.string.app_name, mBuilder.build());
 	}
-
-	private boolean networkOK() {		  
-		ConnectivityManager conMgr =  (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-
-		boolean mobile=conMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isConnected();
-		boolean wifi=conMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnected();
-
-		return ( wifi || mobile );
-	}
-
 
 }
 

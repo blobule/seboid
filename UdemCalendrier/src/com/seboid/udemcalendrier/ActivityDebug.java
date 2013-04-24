@@ -119,7 +119,7 @@ public class ActivityDebug extends Activity implements OnClickListener {
 		Intent in;
 		switch( v.getId() ) {
 		case R.id.buttonMAJ:
-			Toast.makeText(ActivityDebug.this, "service is "+ServiceMiseAJour.class.getName(),Toast.LENGTH_LONG).show();
+			//Toast.makeText(ActivityDebug.this, "service is "+ServiceMiseAJour.class.getName(),Toast.LENGTH_LONG).show();
 			in = new Intent(ActivityDebug.this,ServiceMiseAJour.class);
 			ActivityDebug.this.startService(in);
 //			Calendar cal = Calendar.getInstance();

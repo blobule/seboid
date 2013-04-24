@@ -238,6 +238,9 @@ public class MainActivity extends Activity {
 			// TODO Auto-generated method stub
 			super.notifyDataSetInvalidated();
 			Log.d("bottin", "dataset invalidated!");
+			if( !NetUtil.networkOK(MainActivity.this) ) {
+				status.setText("net!");
+			}
 		}
 
 		public void showNoResult() {

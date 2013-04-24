@@ -10,9 +10,12 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 
 public class NetUtil {
 
@@ -49,4 +52,20 @@ public class NetUtil {
 		return d;
 	}
 
+	//
+	// etat du reseau? on a acces?
+	//
+	public static boolean networkOK(Context ctx) {
+		ConnectivityManager conMgr =  (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
+
+		NetworkInfo net = conMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+
+		boolean mobile= (net!=null)?net.isConnected():false;
+
+		net=conMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+		boolean wifi=(net!=null)?net.isConnected():false;
+
+		return ( wifi || mobile );
+	}
+	
 }

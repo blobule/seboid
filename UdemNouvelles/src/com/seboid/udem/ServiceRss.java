@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteConstraintException;
 import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
@@ -206,7 +207,7 @@ public class ServiceRss extends IntentService {
 //		db=null;
 
 		String info;
-		if( nb==0 ) info="Aucun nouveau message.";
+		if( nb==0 ) info=net?"Aucun nouveau message.":"Pas d'accès au réseau";
 		else info=nb+(nb>1?" nouveaux messages.":" nouveau message.");
 		
 		Class<?> go=ActivityUdeMListFC.class;
@@ -223,7 +224,7 @@ public class ServiceRss extends IntentService {
 		// Verifions si le broadcastreceiver BUSY est disponible.
 		// Si c'est le cas, on va faire un toast plutot qu'une notification
 		//
-		showNotification(mNM,info,go);
+		if( net ) showNotification(mNM,info,go);
 		
 		//scheduleNextUpdate();
 	}
@@ -332,9 +333,10 @@ public class ServiceRss extends IntentService {
 
 	private boolean networkOK() {		  
 		ConnectivityManager conMgr =  (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
-
-		boolean mobile=conMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE).isConnected();
-		boolean wifi=conMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI).isConnected();
+		NetworkInfo net = conMgr.getNetworkInfo(ConnectivityManager.TYPE_MOBILE);
+		boolean mobile=(net!=null)?net.isConnected():false;
+		net=conMgr.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+		boolean wifi=(net!=null)?net.isConnected():false;
 
 		return ( wifi || mobile );
 	}
