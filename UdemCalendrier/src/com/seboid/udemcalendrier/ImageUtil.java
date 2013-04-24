@@ -50,8 +50,8 @@ public class ImageUtil {
 		private final String ME = "TaskQueue";
 
 		private class InternalRunnable implements Runnable {
-			public void run() {
-				internalRun();
+			public void run()  {
+						internalRun();
 			}
 		}
 
@@ -179,6 +179,10 @@ public class ImageUtil {
 					// } catch (IOException e) {
 					// } catch (IllegalStateException e) {
 				} catch (Exception e) {
+					//Log.d("imageutil","exception: "+e.getClass()+":"+e.getMessage());
+					if( e.getClass().equals(java.lang.SecurityException.class) ) {
+						Log.d("imageutil",e.getMessage());
+					}
 					// si on a un bitap par defaut, sinon on laisse invisible
 					if (defaultBM != null) {
 						iv.post(new Runnable() {

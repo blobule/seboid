@@ -114,7 +114,8 @@ LoaderManager.LoaderCallbacks<Cursor> {
 	public void onItemClick(AdapterView<?> arg0, View v, int position, long id) {
 		Toast.makeText(ActivityDebugEvents.this, "item "+position+":"+id, Toast.LENGTH_LONG).show();
 		if( type==0 ) {
-			Intent in=new Intent(ActivityDebugEvents.this,ActivityDebugEvent.class);
+			// plus utilise
+			Intent in=new Intent(ActivityDebugEvents.this,ActivityDebugEventSwipe.class);
 			// le view doit avoir un tag qui contient le id...
 			in.putExtra("id",(int)id);
 			startActivity(in);

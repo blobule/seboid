@@ -36,13 +36,14 @@
                 android:layout_height="wrap_content"
                 android:text="Medium Text"
                 android:textAppearance="?android:attr/textAppearanceSmall"
-                android:textColor="#ff003be6" />
+                android:textColor="#ff0087f6" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal" >
+            android:orientation="horizontal"
+            android:visibility="gone" >
 
             <TextView
                 android:id="@+id/text3"
@@ -50,7 +51,8 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Medium Text"
-                android:textAppearance="?android:attr/textAppearanceSmall" />
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:visibility="gone" />
 
             <TextView
                 android:id="@+id/text4"
@@ -58,7 +60,9 @@
                 android:layout_height="wrap_content"
                 android:text="Medium Text"
                 android:textAppearance="?android:attr/textAppearanceSmall"
-                android:textColor="#ff003be6" />
+                android:textColor="#ff003be6"
+                android:visibility="gone" />
+
         </LinearLayout>
     </LinearLayout>
 

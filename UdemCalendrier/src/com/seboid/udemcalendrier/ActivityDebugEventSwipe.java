@@ -430,16 +430,16 @@ public class ActivityDebugEventSwipe extends FragmentActivity implements
 			web.loadDataWithBaseURL(
 					null,
 					"<style type=\"text/css\">body { color:" + "#ffffff"
-							+ "; background-color:" + "#000000" + " } a { color:"
-							+ "#8080ff" + "; } h2 { color:" + "#ffffff"
+							+ "; background-color:" + "#ffffff" + " } p { color:#000000; } a { color:"
+							+ "#5050ff" + "; } h2 { color:" + "#440000"
 							+ "; } </style><body>"
-							+ "<h2>epoch start "+ c.getLong(c.getColumnIndex("epoch_debut"))+"</h2>"
+							/*+ "<h2>epoch start "+ c.getLong(c.getColumnIndex("epoch_debut"))+"</h2>"*/
 							+ "<img width=\"50%\" src=\""+c.getString(c.getColumnIndex("image"))+"\">"
-							+ c.getString(c.getColumnIndex("description"))
+							+ "<p>" + c.getString(c.getColumnIndex("description")) + "</p>"
 							+ "</body>", "text/html", "utf-8", null);
 			
 			
-			// Log.d("detail", "inflate "+position+" ok");
+			Log.d("detail", c.getString(c.getColumnIndex("description")) );
 
 			((ViewPager) collection).addView(detail, 0);
 			return detail;
